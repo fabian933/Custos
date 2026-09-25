@@ -3,7 +3,6 @@
 import { useState } from "react";
 import AuditPanel from "./components/audit-panel";
 import GatewayPanel, { type Scenario } from "./components/gateway-panel";
-import HeroExplainer from "./components/hero-explainer";
 import type { Agent } from "@/lib/types";
 
 interface Props {
@@ -30,23 +29,20 @@ export default function Demo({ agents, residents }: Props) {
   }
 
   return (
-    <>
-      <HeroExplainer />
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-        <GatewayPanel
-          agents={agents}
-          residents={residents}
-          agentId={agentId}
-          onAgentChange={setAgentId}
-          emiratesId={emiratesId}
-          onResidentChange={setEmiratesId}
-          onAnswered={() => setRefreshToken((token) => token + 1)}
-          onReset={reset}
-          onRunScenario={runScenario}
-          scenario={scenario}
-        />
-        <AuditPanel refreshToken={refreshToken} />
-      </div>
-    </>
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+      <GatewayPanel
+        agents={agents}
+        residents={residents}
+        agentId={agentId}
+        onAgentChange={setAgentId}
+        emiratesId={emiratesId}
+        onResidentChange={setEmiratesId}
+        onAnswered={() => setRefreshToken((token) => token + 1)}
+        onReset={reset}
+        onRunScenario={runScenario}
+        scenario={scenario}
+      />
+      <AuditPanel refreshToken={refreshToken} />
+    </div>
   );
 }

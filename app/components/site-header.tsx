@@ -1,23 +1,42 @@
 import Link from "next/link";
 
+const SECTIONS = [
+  { id: "hero", label: "Overview" },
+  { id: "problem", label: "The problem" },
+  { id: "how", label: "How it works" },
+  { id: "demo", label: "Live demo" },
+  { id: "proof", label: "The proof" },
+  { id: "next", label: "What's next" },
+];
+
 export default function SiteHeader({ active }: { active: "demo" | "verify" }) {
   return (
-    <header className="border-b border-navy-100 bg-white">
-      <div className="mx-auto flex max-w-[1400px] items-center justify-between px-8 py-5">
+    <header className="sticky top-0 z-30 border-b border-navy-200/70 bg-cream-100/90 backdrop-blur">
+      <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-6 px-8 py-3">
         <Link href="/" className="flex items-baseline gap-3">
-          <span className="text-xl font-semibold tracking-tight text-navy-800">Custos</span>
-          <span className="text-sm text-navy-500">Give AI the answer, never the record.</span>
+          <span className="text-lg font-semibold tracking-tight text-navy-800">Custos</span>
+          <span className="hidden text-sm text-navy-500 lg:inline">
+            Give AI the answer, never the record.
+          </span>
         </Link>
-        <nav className="flex items-center gap-6 text-sm">
-          <Link
-            href="/"
-            className={active === "demo" ? "font-semibold text-navy-800" : "text-navy-500"}
-          >
-            Demo
-          </Link>
+        <nav className="flex items-center gap-5 text-sm">
+          {active === "demo" &&
+            SECTIONS.map((section) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                className="hidden text-navy-500 transition hover:text-navy-800 md:inline"
+              >
+                {section.label}
+              </a>
+            ))}
           <Link
             href="/verify"
-            className={active === "verify" ? "font-semibold text-navy-800" : "text-navy-500"}
+            className={
+              active === "verify"
+                ? "font-semibold text-navy-800"
+                : "rounded-full border border-navy-300 px-3 py-1.5 font-medium text-navy-700 transition hover:bg-navy-50"
+            }
           >
             Verify an answer
           </Link>

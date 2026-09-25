@@ -2,15 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
 body {
-  color: #0e1b2e;
-  background: #f7f9fc;
+  color: #4d424c;
+  background: #f7e9c6;
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
 @layer components {
   .panel {
-    @apply flex flex-col rounded-xl border border-navy-100 bg-white shadow-sm;
+    @apply flex flex-col rounded-xl border border-navy-200/70 bg-white shadow-sm;
+  }
+  .section-eyebrow {
+    @apply mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-navy-500;
+  }
+  .section-title {
+    @apply text-2xl font-semibold tracking-tight text-navy-800;
   }
   .panel-head {
     @apply border-b border-navy-100 px-6 py-5;

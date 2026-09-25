@@ -13,8 +13,6 @@ const RECORD_FIELDS = [
   "Medical cover",
 ];
 
-const QUESTION = "Eligible for housing grant?";
-
 function AgentIcon() {
   return (
     <svg viewBox="0 0 48 48" className="h-8 w-8" fill="none" strokeWidth={2}>
@@ -82,14 +80,26 @@ function Node({
   );
 }
 
-function Flow({ label, tone }: { label: string; tone: "question" | "leak" | "fact" }) {
+function Flow({
+  label,
+  tone,
+  back = false,
+}: {
+  label: string;
+  tone: "question" | "leak" | "fact";
+  back?: boolean;
+}) {
   const colour =
     tone === "leak" ? "bg-red-400" : tone === "fact" ? "bg-teal-500" : "bg-navy-300";
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
-      <span className="text-[11px] font-medium text-navy-500">{label}</span>
+      <span className="whitespace-nowrap text-[11px] font-medium text-navy-500">{label}</span>
       <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-navy-100">
-        <span className={`absolute inset-y-0 w-1/3 animate-flow-out rounded-full ${colour}`} />
+        <span
+          className={`absolute inset-y-0 w-1/3 rounded-full ${colour} ${
+            back ? "animate-flow-back" : "animate-flow-out"
+          }`}
+        />
       </div>
     </div>
   );
@@ -99,7 +109,7 @@ export default function HeroExplainer() {
   const [withCustos, setWithCustos] = useState(false);
 
   return (
-    <section className="panel mb-6 px-8 py-6">
+    <section className="panel px-8 py-6">
       <div className="grid gap-6 lg:grid-cols-[minmax(260px,340px)_1fr] lg:gap-10">
         <div className="flex flex-col justify-center gap-3">
           <h1 className="text-2xl font-semibold leading-snug tracking-tight text-navy-900">
@@ -137,22 +147,31 @@ export default function HeroExplainer() {
           className="animate-chip-in rounded-xl border border-navy-100 bg-navy-50/60 p-5"
         >
           <div className="flex items-start gap-4">
-            <Node icon={<AgentIcon />} label="AI agent" sub="housing-agent" />
+            <div className="flex shrink-0 flex-col items-center gap-2">
+              <Node icon={<AgentIcon />} label="AI agent" sub="housing-agent" />
+              {withCustos && (
+                <span className="animate-chip-in whitespace-nowrap rounded-full border border-teal-400 bg-teal-100 px-2.5 py-1 text-[11px] font-semibold text-teal-800">
+                  Eligible ✓ · ZK proof
+                </span>
+              )}
+            </div>
 
             {withCustos ? (
               <>
                 <div className="flex min-w-0 flex-1 flex-col gap-3 pt-4">
-                  <Flow label={QUESTION} tone="question" />
+                  <Flow label="Question" tone="question" />
+                  <Flow label="Answer + proof" tone="fact" back />
                 </div>
                 <Node icon={<ShieldIcon />} label="Custos" sub="fact gateway" />
                 <div className="flex min-w-0 flex-1 flex-col gap-3 pt-4">
-                  <Flow label="one signed answer" tone="fact" />
+                  <Flow label="Question" tone="question" />
+                  <Flow label="Answer + proof" tone="fact" back />
                 </div>
               </>
             ) : (
               <div className="flex min-w-0 flex-1 flex-col gap-3 pt-4">
-                <Flow label={QUESTION} tone="question" />
-                <Flow label="the whole record comes back" tone="leak" />
+                <Flow label="Question" tone="question" />
+                <Flow label="Full record" tone="leak" back />
               </div>
             )}
 
@@ -160,52 +179,27 @@ export default function HeroExplainer() {
           </div>
 
           <div className="mt-5">
-            {withCustos ? (
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,260px)_1fr]">
-                <div>
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-navy-500">
-                    Returned to the agent
-                  </p>
-                  <div className="animate-chip-in rounded-lg border border-teal-300 bg-teal-50 px-4 py-3">
-                    <p className="text-sm font-semibold text-teal-800">Eligible: YES ✓</p>
-                    <p className="mt-0.5 text-xs text-teal-700">+ signed answer</p>
-                  </div>
-                </div>
-                <div>
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-navy-500">
-                    Stays in government systems
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {RECORD_FIELDS.map((field) => (
-                      <span
-                        key={field}
-                        className="inline-flex items-center gap-1 rounded-full border border-navy-200 bg-navy-100 px-2.5 py-1 text-[11px] font-medium text-navy-400 transition"
-                      >
-                        <LockIcon />
-                        {field}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-navy-500">
-                  Sent to the model
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {RECORD_FIELDS.map((field, i) => (
-                    <span
-                      key={field}
-                      style={{ animationDelay: `${i * 45}ms` }}
-                      className="animate-chip-in rounded-full border border-red-300 bg-red-50 px-2.5 py-1 text-[11px] font-medium text-red-700"
-                    >
-                      {field}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="flex flex-wrap gap-1.5">
+              {RECORD_FIELDS.map((field, i) =>
+                withCustos ? (
+                  <span
+                    key={field}
+                    className="inline-flex items-center gap-1 rounded-full border border-navy-200 bg-navy-100 px-2.5 py-1 text-[11px] font-medium text-navy-400"
+                  >
+                    <LockIcon />
+                    {field}
+                  </span>
+                ) : (
+                  <span
+                    key={field}
+                    style={{ animationDelay: `${i * 45}ms` }}
+                    className="animate-chip-in rounded-full border border-red-300 bg-red-50 px-2.5 py-1 text-[11px] font-medium text-red-700"
+                  >
+                    {field}
+                  </span>
+                ),
+              )}
+            </div>
             <p className="mt-4 text-sm text-navy-500">
               {withCustos
                 ? "One question. One approved answer. The record stays put."

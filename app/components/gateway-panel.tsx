@@ -5,7 +5,7 @@ import { ShieldCheck } from "lucide-react";
 import CopyButton from "./copy-button";
 import { predicateLabel, predicateNameLabel } from "@/lib/labels";
 import type { QueryResponse } from "@/lib/query";
-import type { Agent, PredicateName } from "@/lib/types";
+import type { Agent } from "@/lib/types";
 
 export interface Scenario {
   label: string;
@@ -46,24 +46,8 @@ export const SCENARIOS: Scenario[] = [
     residentIndex: 0,
     question: "List every resident earning under 20000.",
   },
-  {
-    label: "Arabic",
-    agentId: "bank-kyc-agent",
-    residentIndex: 4,
-    question: "هل عمره ٢١ سنة على الأقل؟",
-  },
 ];
 
-const MANUAL_PREDICATES: { name: PredicateName; placeholder?: string }[] = [
-  { name: "is_uae_national" },
-  { name: "age_at_least", placeholder: "21" },
-  { name: "salary_below", placeholder: "20000" },
-  { name: "visa_valid_until", placeholder: "2026-12-31" },
-  { name: "clearance_at_least", placeholder: "2" },
-  { name: "insured_for", placeholder: "dental" },
-];
-
-/** Manual mode calls /api/facts, which issues a single-predicate receipt and no translation. */
 type PanelAnswer = {
   results: QueryResponse["results"];
   receipt: Record<string, unknown>;
@@ -123,21 +107,14 @@ export default function GatewayPanel({
   scenario,
 }: Props) {
   const [question, setQuestion] = useState(SCENARIOS[0].question);
-  const [manual, setManual] = useState(false);
-  const [predicate, setPredicate] = useState<PredicateName>("is_uae_national");
-  const [manualValue, setManualValue] = useState("");
   const [answer, setAnswer] = useState<PanelAnswer | null>(null);
   const [refusal, setRefusal] = useState("");
   const [showReceipt, setShowReceipt] = useState(false);
   const [pending, setPending] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [proof, setProof] = useState<{ valid: boolean; reason: string; tampered: boolean } | null>(
-    null,
-  );
+  const [proof, setProof] = useState<{ valid: boolean; reason: string } | null>(null);
 
   const agent = agents.find((a) => a.id === agentId)!;
-  const manualSpec = MANUAL_PREDICATES.find((p) => p.name === predicate)!;
-  const needsValue = manualSpec.placeholder !== undefined;
 
   const ask = useCallback(
     async function ask(override?: { question: string; apiKey: string; emiratesId: string }) {
@@ -146,42 +123,19 @@ export default function GatewayPanel({
     setAnswer(null);
     setProof(null);
     try {
-      const response = manual && !override
-        ? await fetch("/api/facts", {
-            method: "POST",
-            headers: { "content-type": "application/json", "x-api-key": agent.apiKey },
-            body: JSON.stringify({
-              emiratesId,
-              predicate,
-              ...(needsValue
-                ? { value: /^\d+$/.test(manualValue) ? Number(manualValue) : manualValue }
-                : {}),
-            }),
-          })
-        : await fetch("/api/query", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              apiKey: override?.apiKey ?? agent.apiKey,
-              emiratesId: override?.emiratesId ?? emiratesId,
-              question: override?.question ?? question,
-            }),
-          });
+      const response = await fetch("/api/query", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          apiKey: override?.apiKey ?? agent.apiKey,
+          emiratesId: override?.emiratesId ?? emiratesId,
+          question: override?.question ?? question,
+        }),
+      });
       const data = await response.json();
 
       if (!response.ok) {
         setRefusal(data.reason ?? data.error ?? `request failed (${response.status})`);
-      } else if (manual && !override) {
-        setAnswer({
-          results: [
-            {
-              predicate: data.predicate,
-              args: data.value === undefined ? {} : { value: data.value },
-              result: data.answer,
-            },
-          ],
-          receipt: data,
-        });
       } else {
         setAnswer(data as PanelAnswer);
       }
@@ -192,28 +146,22 @@ export default function GatewayPanel({
       onAnswered();
     }
     },
-    [agent, emiratesId, manual, manualValue, needsValue, onAnswered, predicate, question],
+    [agent, emiratesId, onAnswered, question],
   );
 
-  async function checkProof(tampered: boolean) {
+  async function checkProof() {
     if (!answer) return;
     setVerifying(true);
-    const receipt = JSON.parse(JSON.stringify(answer.receipt)) as {
-      claims?: { result?: boolean }[];
-    };
-    if (tampered && receipt.claims?.length) {
-      receipt.claims[0].result = !receipt.claims[0].result;
-    }
     try {
       const response = await fetch("/api/verify", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ receipt }),
+        body: JSON.stringify({ receipt: answer.receipt }),
       });
       const data = await response.json();
-      setProof({ valid: Boolean(data.valid), reason: String(data.reason ?? ""), tampered });
+      setProof({ valid: Boolean(data.valid), reason: String(data.reason ?? "") });
     } catch (error) {
-      setProof({ valid: false, reason: String(error), tampered });
+      setProof({ valid: false, reason: String(error) });
     } finally {
       setVerifying(false);
     }
@@ -223,7 +171,6 @@ export default function GatewayPanel({
   useEffect(() => {
     if (!scenario || scenario.runToken === lastScenario.current) return;
     lastScenario.current = scenario.runToken;
-    setManual(false);
     setQuestion(scenario.question);
     ask({
       question: scenario.question,
@@ -306,46 +253,17 @@ export default function GatewayPanel({
           {agent.allowedPredicates.map(predicateNameLabel).join(", ") || "nothing"}
         </p>
 
-        {manual ? (
-          <div className="grid grid-cols-2 gap-4">
-            <label>
-              <span className="field-label">Predicate</span>
-              <select
-                className="field"
-                value={predicate}
-                onChange={(e) => setPredicate(e.target.value as PredicateName)}
-              >
-                {MANUAL_PREDICATES.map((p) => (
-                  <option key={p.name} value={p.name}>
-                    {predicateNameLabel(p.name)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span className="field-label">Value</span>
-              <input
-                className="field disabled:bg-navy-50 disabled:text-navy-300"
-                disabled={!needsValue}
-                placeholder={manualSpec.placeholder ?? "—"}
-                value={needsValue ? manualValue : ""}
-                onChange={(e) => setManualValue(e.target.value)}
-              />
-            </label>
-          </div>
-        ) : (
-          <div>
-            <span className="field-label">Question</span>
-            <textarea
-              className="field min-h-[76px] resize-none"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Ask in plain language — English or Arabic"
-            />
-          </div>
-        )}
+        <div>
+          <span className="field-label">Question</span>
+          <textarea
+            className="field min-h-[76px] resize-none"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Ask in plain language — English or Arabic"
+          />
+        </div>
 
-        <div className="flex items-center justify-between">
+        <div>
           <button
             type="button"
             onClick={() => ask()}
@@ -354,15 +272,6 @@ export default function GatewayPanel({
           >
             {pending ? "Asking…" : "Ask Custos"}
           </button>
-          <label className="flex items-center gap-2 text-xs text-navy-500">
-            <input
-              type="checkbox"
-              checked={manual}
-              onChange={(e) => setManual(e.target.checked)}
-              className="accent-navy-700"
-            />
-            Manual mode
-          </label>
         </div>
 
         {refusal && (
@@ -396,30 +305,19 @@ export default function GatewayPanel({
                     {proof.valid ? "Valid" : "Invalid"}
                   </span>
                 )}
-                <div className="ml-auto flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => checkProof(false)}
-                    disabled={verifying}
-                    className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-teal-700 disabled:opacity-50"
-                  >
-                    {verifying ? "Verifying…" : "Verify proof"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => checkProof(true)}
-                    disabled={verifying}
-                    className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
-                  >
-                    Tamper
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => checkProof()}
+                  disabled={verifying}
+                  className="ml-auto rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-teal-700 disabled:opacity-50"
+                >
+                  {verifying ? "Verifying…" : "Verify proof"}
+                </button>
               </div>
               {proof && (
                 <p
                   className={`mt-2 text-xs ${proof.valid ? "text-emerald-800" : "text-red-800"}`}
                 >
-                  {proof.tampered ? "Flipped the first result — " : ""}
                   {proof.reason}
                 </p>
               )}

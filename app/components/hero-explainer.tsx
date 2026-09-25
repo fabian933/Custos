@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Bot, ChevronLeft, ChevronRight, Landmark, Lock, ShieldCheck } from "lucide-react";
 
 const RECORD_FIELDS = [
   "Emirates ID",
@@ -10,95 +9,88 @@ const RECORD_FIELDS = [
   "Salary",
   "Visa status",
   "Clearance",
+  "Insurance",
   "Medical cover",
 ];
 
 const QUESTION = "Eligible for housing grant?";
 
+function AgentIcon() {
+  return (
+    <svg viewBox="0 0 48 48" className="h-8 w-8" fill="none" strokeWidth={2}>
+      <rect x="10" y="16" width="28" height="22" rx="5" className="stroke-navy-700" />
+      <path d="M24 8v8" className="stroke-navy-700" strokeLinecap="round" />
+      <circle cx="24" cy="6" r="2.5" className="fill-navy-700" />
+      <circle cx="18.5" cy="26" r="2.5" className="fill-teal-500" />
+      <circle cx="29.5" cy="26" r="2.5" className="fill-teal-500" />
+      <path d="M19 32h10" className="stroke-navy-400" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function GovernmentIcon() {
+  return (
+    <svg viewBox="0 0 48 48" className="h-8 w-8" fill="none" strokeWidth={2}>
+      <path d="M6 18 24 8l18 10" className="stroke-navy-700" strokeLinejoin="round" />
+      <path d="M11 18v16M19 18v16M29 18v16M37 18v16" className="stroke-navy-700" />
+      <path d="M6 38h36" className="stroke-navy-700" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ShieldIcon() {
+  return (
+    <svg viewBox="0 0 48 48" className="h-9 w-9" fill="none" strokeWidth={2}>
+      <path
+        d="M24 5 40 11v14c0 9-7 15.5-16 18-9-2.5-16-9-16-18V11L24 5Z"
+        className="fill-teal-50 stroke-teal-600"
+        strokeLinejoin="round"
+      />
+      <path d="m17 24 5 5 9-10" className="stroke-teal-600" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" strokeWidth={1.6}>
+      <rect x="3.5" y="7" width="9" height="6.5" rx="1.5" className="stroke-navy-400" />
+      <path d="M5.75 7V5a2.25 2.25 0 1 1 4.5 0v2" className="stroke-navy-400" />
+    </svg>
+  );
+}
+
 function Node({
   icon,
   label,
-  accent,
+  sub,
 }: {
   icon: React.ReactNode;
   label: string;
-  accent?: boolean;
+  sub: string;
 }) {
   return (
-    <div className="flex w-24 shrink-0 flex-col items-center gap-1.5 text-center">
-      <div
-        className={`flex h-14 w-14 items-center justify-center rounded-2xl border bg-white shadow-sm ${
-          accent ? "border-teal-300 text-teal-600" : "border-navy-200 text-navy-700"
-        }`}
-      >
+    <div className="flex w-32 shrink-0 flex-col items-center gap-2 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-navy-200 bg-white shadow-sm">
         {icon}
       </div>
-      <p className="text-[11px] font-semibold text-navy-700">{label}</p>
-    </div>
-  );
-}
-
-function Arrows({
-  label,
-  tone,
-  direction,
-}: {
-  label: string;
-  tone: "navy" | "red" | "teal";
-  direction: "right" | "left";
-}) {
-  const colour =
-    tone === "red" ? "text-red-400" : tone === "teal" ? "text-teal-500" : "text-navy-300";
-  const labelColour =
-    tone === "red" ? "text-red-600" : tone === "teal" ? "text-teal-700" : "text-navy-500";
-  const Chevron = direction === "right" ? ChevronRight : ChevronLeft;
-  const chevrons = [0, 1, 2];
-
-  return (
-    <div className="flex min-w-0 flex-1 flex-col items-center gap-1">
-      <span className={`text-[11px] font-medium ${labelColour}`}>{label || "\u00a0"}</span>
-      <div
-        className={`flex w-full items-center ${
-          direction === "right" ? "justify-start" : "flex-row-reverse justify-start"
-        } ${colour}`}
-      >
-        <span className="h-px flex-1 bg-current opacity-30" />
-        {chevrons.map((i) => (
-          <Chevron
-            key={i}
-            size={14}
-            strokeWidth={3}
-            className="animate-pulse-chevron"
-            style={{
-              animationDelay: `${(direction === "right" ? i : chevrons.length - 1 - i) * 220}ms`,
-            }}
-          />
-        ))}
-        <span className="h-px flex-1 bg-current opacity-30" />
+      <div>
+        <p className="text-xs font-semibold text-navy-800">{label}</p>
+        <p className="text-[11px] text-navy-400">{sub}</p>
       </div>
     </div>
   );
 }
 
-function FieldStack({ withCustos }: { withCustos: boolean }) {
+function Flow({ label, tone }: { label: string; tone: "question" | "leak" | "fact" }) {
+  const colour =
+    tone === "leak" ? "bg-red-400" : tone === "fact" ? "bg-teal-500" : "bg-navy-300";
   return (
-    <div className="w-44 shrink-0 overflow-hidden rounded-lg border border-navy-200 bg-white">
-      {withCustos && (
-        <div className="flex items-center gap-1.5 border-b border-teal-200 bg-teal-50 px-3 py-1.5 text-[11px] font-semibold text-teal-700">
-          Eligible ✓
-        </div>
-      )}
-      {RECORD_FIELDS.map((field) => (
-        <div
-          key={field}
-          className={`flex items-center gap-1.5 border-b border-navy-100 px-3 py-1.5 text-[11px] font-medium last:border-b-0 transition-colors duration-300 ${
-            withCustos ? "bg-navy-50 text-navy-400" : "bg-red-50 text-red-700"
-          }`}
-        >
-          {withCustos && <Lock size={11} />}
-          {field}
-        </div>
-      ))}
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
+      <span className="text-[11px] font-medium text-navy-500">{label}</span>
+      <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-navy-100">
+        <span className={`absolute inset-y-0 w-1/3 animate-flow-out rounded-full ${colour}`} />
+      </div>
     </div>
   );
 }
@@ -142,45 +134,84 @@ export default function HeroExplainer() {
 
         <div
           key={withCustos ? "with" : "without"}
-          className="animate-chip-in rounded-xl border border-navy-100 bg-navy-50/60 px-6 py-5"
+          className="animate-chip-in rounded-xl border border-navy-100 bg-navy-50/60 p-5"
         >
-          <div className="flex items-center gap-4">
-            <Node icon={<Bot size={26} strokeWidth={1.8} />} label="AI agent" />
-            <Arrows label={QUESTION} tone="navy" direction="right" />
-            {withCustos && (
-              <>
-                <Node
-                  icon={<ShieldCheck size={26} strokeWidth={1.8} />}
-                  label="Custos"
-                  accent
-                />
-                <Arrows label="" tone="navy" direction="right" />
-              </>
-            )}
-            <div className="flex w-44 shrink-0 justify-center">
-              <Node icon={<Landmark size={26} strokeWidth={1.8} />} label="Government records" />
-            </div>
-          </div>
+          <div className="flex items-start gap-4">
+            <Node icon={<AgentIcon />} label="AI agent" sub="housing-agent" />
 
-          <div className="mt-5 flex items-center gap-4">
-            <div className="w-24 shrink-0" />
             {withCustos ? (
               <>
-                <Arrows label="Answer + proof" tone="teal" direction="left" />
-                <div className="w-24 shrink-0" />
-                <Arrows label="Answer" tone="teal" direction="left" />
+                <div className="flex min-w-0 flex-1 flex-col gap-3 pt-4">
+                  <Flow label={QUESTION} tone="question" />
+                </div>
+                <Node icon={<ShieldIcon />} label="Custos" sub="fact gateway" />
+                <div className="flex min-w-0 flex-1 flex-col gap-3 pt-4">
+                  <Flow label="one signed answer" tone="fact" />
+                </div>
               </>
             ) : (
-              <Arrows label="Full record" tone="red" direction="left" />
+              <div className="flex min-w-0 flex-1 flex-col gap-3 pt-4">
+                <Flow label={QUESTION} tone="question" />
+                <Flow label="the whole record comes back" tone="leak" />
+              </div>
             )}
-            <FieldStack withCustos={withCustos} />
+
+            <Node icon={<GovernmentIcon />} label="Government records" sub="resident registry" />
           </div>
 
-          <p className="mt-6 text-sm text-navy-500">
-            {withCustos
-              ? "One question. One answer with proof. The record stays put."
-              : "One question. The full record sent to the model."}
-          </p>
+          <div className="mt-5">
+            {withCustos ? (
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,260px)_1fr]">
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-navy-500">
+                    Returned to the agent
+                  </p>
+                  <div className="animate-chip-in rounded-lg border border-teal-300 bg-teal-50 px-4 py-3">
+                    <p className="text-sm font-semibold text-teal-800">Eligible: YES ✓</p>
+                    <p className="mt-0.5 text-xs text-teal-700">+ signed answer</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-navy-500">
+                    Stays in government systems
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {RECORD_FIELDS.map((field) => (
+                      <span
+                        key={field}
+                        className="inline-flex items-center gap-1 rounded-full border border-navy-200 bg-navy-100 px-2.5 py-1 text-[11px] font-medium text-navy-400 transition"
+                      >
+                        <LockIcon />
+                        {field}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-navy-500">
+                  Sent to the model
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {RECORD_FIELDS.map((field, i) => (
+                    <span
+                      key={field}
+                      style={{ animationDelay: `${i * 45}ms` }}
+                      className="animate-chip-in rounded-full border border-red-300 bg-red-50 px-2.5 py-1 text-[11px] font-medium text-red-700"
+                    >
+                      {field}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            <p className="mt-4 text-sm text-navy-500">
+              {withCustos
+                ? "One question. One approved answer. The record stays put."
+                : "One question. The full record sent to the model."}
+            </p>
+          </div>
         </div>
       </div>
     </section>

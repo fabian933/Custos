@@ -23,11 +23,54 @@ npm test                # vitest
 npm run lint
 ```
 
+Set `OPENAI_API_KEY` in `.env.local` to translate questions with an LLM (model via
+`CUSTOS_LLM_MODEL`, default `gpt-4o-mini`). Without it — or if the call fails — `/api/query`
+falls back to a keyword parser so the demo never breaks.
+
 ## API
+
+### `POST /api/query`
+
+The main flow: a plain-language question (English or Arabic) in, signed yes/no claims out.
+
+```bash
+curl -s localhost:3000/api/query \
+  -H 'content-type: application/json' \
+  -d '{"apiKey":"custos_demo_housing_7f3c1a9b2e","emiratesId":"784-1987-1234567-1",
+       "question":"Is this person eligible for a housing grant?"}'
+```
+
+```json
+{
+  "results": [
+    { "predicate": "is_uae_national", "args": {}, "result": true },
+    { "predicate": "salary_below", "args": { "amount": 30000 }, "result": true }
+  ],
+  "receipt": {
+    "claims": [],
+    "subjectHash": "<sha256(emiratesId)>",
+    "agentId": "housing-agent",
+    "purpose": "housing grant eligibility",
+    "timestamp": "2025-01-01T00:00:00.000Z",
+    "nonce": "<uuid>",
+    "issuer": "custos.gov.demo",
+    "signature": "<base64 Ed25519 over the canonical receipt minus signature>"
+  },
+  "translatedBy": "llm"
+}
+```
+
+Refusals return `{"refused":true,"reason":"..."}`:
+
+| Case | Reason |
+| --- | --- |
+| unknown or unregistered `apiKey` | `unregistered agent` |
+| question asks for a raw value, the full record, or bulk data | from the translator |
+| predicate outside the agent's `allowedPredicates` | `predicate not permitted for this agent's purpose` |
 
 ### `POST /api/facts`
 
-Header `x-api-key: <agent key from data/agents.json>`.
+Debug / manual mode: ask one predicate directly. Header `x-api-key: <agent key from data/agents.json>`.
 
 ```bash
 curl -s localhost:3000/api/facts \

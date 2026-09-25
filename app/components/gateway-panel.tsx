@@ -374,7 +374,19 @@ export default function GatewayPanel({
         </div>
 
         <p className="text-xs text-navy-500">
-          <span className="font-medium text-navy-700">{agent.owner}</span> · purpose:{" "}
+          {agent.registered ? (
+            <>
+              Owner: <span className="font-medium text-navy-700">{agent.owner}</span> ·{" "}
+              <span className="font-medium text-navy-700">✓ verified via UAE Pass</span>{" "}
+              (simulated in demo)
+            </>
+          ) : (
+            <span className="font-medium text-navy-700">No registered owner</span>
+          )}
+        </p>
+
+        <p className="text-xs text-navy-500">
+          purpose:{" "}
           {agent.purpose} · may ask:{" "}
           {agent.allowedPredicates.map(predicateNameLabel).join(", ") || "nothing"}
         </p>

@@ -16,7 +16,8 @@ const STEPS = [
   {
     icon: ShieldCheck,
     title: "Custos checks",
-    body: "Is this agent registered? Is it allowed to ask this?",
+    body:
+      "Is this agent registered to an owner verified through UAE Pass? Is it allowed to ask this?",
   },
   {
     icon: BadgeCheck,
@@ -27,7 +28,7 @@ const STEPS = [
 
 const NEXT = [
   "Zero-knowledge proofs for every check",
-  "Agent identity through UAE Pass",
+  "Live UAE Pass integration",
   "Deployment on sovereign cloud",
 ];
 

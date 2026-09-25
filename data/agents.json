@@ -1,0 +1,26 @@
+[
+  {
+    "id": "housing-agent",
+    "owner": "Ministry of Housing (demo)",
+    "purpose": "housing grant eligibility",
+    "allowedPredicates": ["is_uae_national", "salary_below", "age_at_least"],
+    "apiKey": "custos_demo_housing_7f3c1a9b2e",
+    "registered": true
+  },
+  {
+    "id": "bank-kyc-agent",
+    "owner": "Demo Bank",
+    "purpose": "residency verification",
+    "allowedPredicates": ["visa_valid_until", "age_at_least"],
+    "apiKey": "custos_demo_bankkyc_4d8e6c0a15",
+    "registered": true
+  },
+  {
+    "id": "rogue-agent",
+    "owner": "unknown",
+    "purpose": "none",
+    "allowedPredicates": [],
+    "apiKey": "custos_demo_rogue_0000000000",
+    "registered": false
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "emiratesId": "784-1987-1234567-1",
+    "fullName": "Khalid Abdulla Al Mansoori",
+    "nationality": "United Arab Emirates",
+    "dob": "1987-03-14",
+    "salaryAED": 18000,
+    "visaExpiry": null,
+    "clearanceLevel": 2,
+    "insurancePlan": "Thiqa Platinum",
+    "coveredTreatments": ["general", "dental", "maternity", "oncology", "physiotherapy"]
+  },
+  {
+    "emiratesId": "784-1996-7654321-2",
+    "fullName": "Mariam Saeed Al Nuaimi",
+    "nationality": "United Arab Emirates",
+    "dob": "1996-11-02",
+    "salaryAED": 9500,
+    "visaExpiry": null,
+    "clearanceLevel": 0,
+    "insurancePlan": "Thiqa Basic",
+    "coveredTreatments": ["general", "maternity"]
+  },
+  {
+    "emiratesId": "784-1979-2468101-3",
+    "fullName": "Rajesh Kumar Nair",
+    "nationality": "India",
+    "dob": "1979-06-30",
+    "salaryAED": 42000,
+    "visaExpiry": "2027-08-15",
+    "clearanceLevel": 3,
+    "insurancePlan": "Daman Enhanced",
+    "coveredTreatments": ["general", "dental", "optical", "oncology"]
+  },
+  {
+    "emiratesId": "784-2001-1357913-4",
+    "fullName": "Sophia Isabelle Martin",
+    "nationality": "United Kingdom",
+    "dob": "2001-01-21",
+    "salaryAED": 7200,
+    "visaExpiry": "2026-02-28",
+    "clearanceLevel": 1,
+    "insurancePlan": "Daman Essential",
+    "coveredTreatments": ["general"]
+  },
+  {
+    "emiratesId": "784-1965-9876543-5",
+    "fullName": "Ahmed Tarek El Sayed",
+    "nationality": "Egypt",
+    "dob": "1965-09-09",
+    "salaryAED": 15500,
+    "visaExpiry": "2025-12-01",
+    "clearanceLevel": 0,
+    "insurancePlan": "Daman Basic",
+    "coveredTreatments": ["general", "physiotherapy", "cardiology"]
+  }
+]

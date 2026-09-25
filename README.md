@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Custos
 
-## Getting Started
+A fact gateway for government AI agents. When an agent asks a ministry about a resident, Custos
+answers with a signed yes/no fact instead of handing over the record. The raw record never leaves
+the ministry.
 
-First, run the development server:
+Single Next.js 14 app (App Router, TypeScript, Tailwind). No database, no separate backend, no
+auth system — demo data lives in `data/`.
+
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run genkey          # prints CUSTOS_SIGNING_KEY=... for .env.local
+npm run dev             # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`npm run genkey` generates an Ed25519 keypair and prints the private key (PKCS#8 DER, base64) to
+put in `.env.local`. The matching public key is served at `GET /api/public-key`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm test                # vitest
+npm run lint
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## API
 
-## Learn More
+### `POST /api/facts`
 
-To learn more about Next.js, take a look at the following resources:
+Header `x-api-key: <agent key from data/agents.json>`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+curl -s localhost:3000/api/facts \
+  -H 'content-type: application/json' \
+  -H 'x-api-key: custos_demo_housing_7f3c1a9b2e' \
+  -d '{"emiratesId":"784-1987-1234567-1","predicate":"salary_below","value":20000}'
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```json
+{
+  "emiratesId": "784-1987-1234567-1",
+  "predicate": "salary_below",
+  "value": 20000,
+  "answer": true,
+  "issuedAt": "2025-01-01T00:00:00.000Z",
+  "issuer": "custos.gov.demo",
+  "agentId": "housing-agent",
+  "signature": "<base64 Ed25519>",
+  "algorithm": "Ed25519"
+}
+```
 
-## Deploy on Vercel
+The signature covers the canonical JSON (recursively key-sorted) of the claim — every field of
+the response except `signature` and `algorithm`. Verify it against `GET /api/public-key`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+An agent may only ask the predicates listed in its `allowedPredicates`; anything else is `403`,
+as is any request from an unregistered agent (`rogue-agent`).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### `GET /api/public-key`
+
+Returns the Ed25519 public key as base64 DER (SPKI) and as PEM.
+
+### `GET /api/agents`
+
+The agent directory (API keys omitted).
+
+## Predicates
+
+`lib/predicates.ts` holds pure functions over a resident record:
+
+| Predicate | Argument | Answers |
+| --- | --- | --- |
+| `is_uae_national` | — | nationality is UAE |
+| `age_at_least` | `n` | age in full years ≥ n |
+| `salary_below` | `amount` | `salaryAED < amount` |
+| `visa_valid_until` | `date` | visa expiry ≥ date (nationals always valid) |
+| `clearance_at_least` | `level` | `clearanceLevel >= level` |
+| `insured_for` | `treatment` | treatment is covered |

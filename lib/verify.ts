@@ -6,6 +6,8 @@ export interface VerifyResult {
   valid: boolean;
   reason: string;
   proofTypes?: string[];
+  /** Wall-clock time spent checking the signature and every proof. */
+  verifyMs?: number;
 }
 
 const REQUIRED_FIELDS = [
@@ -56,8 +58,9 @@ export function verifyReceipt(receipt: unknown): VerifyResult {
  * zero-knowledge proof carried by a salary or age claim.
  */
 export async function verifyAnswer(receipt: unknown): Promise<VerifyResult> {
+  const started = Date.now();
   const signature = verifyReceipt(receipt);
-  if (!signature.valid) return signature;
+  if (!signature.valid) return { ...signature, verifyMs: Date.now() - started };
 
   const claims = (receipt as { claims: { result: unknown; proof?: unknown }[] }).claims;
   const reasons = [signature.reason];
@@ -65,7 +68,7 @@ export async function verifyAnswer(receipt: unknown): Promise<VerifyResult> {
   for (const claim of claims) {
     if (!claim.proof) continue;
     const zk = await verifyClaimProof(claim);
-    if (!zk.valid) return { valid: false, reason: zk.reason };
+    if (!zk.valid) return { valid: false, reason: zk.reason, verifyMs: Date.now() - started };
     reasons.push(zk.reason);
   }
 
@@ -73,5 +76,6 @@ export async function verifyAnswer(receipt: unknown): Promise<VerifyResult> {
     valid: true,
     reason: reasons.join("; "),
     proofTypes: [...new Set(claims.map((claim) => proofLabel(Boolean(claim.proof))))],
+    verifyMs: Date.now() - started,
   };
 }

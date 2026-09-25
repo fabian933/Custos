@@ -14,7 +14,7 @@ export default function SiteHeader({ active }: { active: "demo" | "verify" }) {
     <header className="sticky top-0 z-30 border-b border-navy-200/70 bg-cream-100/90 backdrop-blur">
       <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-6 px-8 py-3">
         <Link href="/" className="flex items-baseline gap-3">
-          <span className="text-lg font-semibold tracking-tight text-navy-800">Custos</span>
+          <span className="text-lg font-semibold tracking-tight text-red-600">Custos</span>
           <span className="hidden text-sm text-navy-500 lg:inline">
             Give AI the answer, never the record.
           </span>

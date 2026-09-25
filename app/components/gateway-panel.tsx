@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ShieldCheck } from "lucide-react";
+import { Check, Lock, ShieldCheck } from "lucide-react";
 import CopyButton from "./copy-button";
 import { predicateLabel, predicateNameLabel } from "@/lib/labels";
 import { SIGNATURE_LABEL, ZK_LABEL, proofLabel } from "@/lib/proof-label";
@@ -49,6 +49,115 @@ export const SCENARIOS: Scenario[] = [
   },
 ];
 
+type ClaimProofInputs = {
+  publicInputs?: { commitment: string; threshold: number; mode: 0 | 1 };
+  publicSignals?: string[];
+  proof?: Record<string, unknown>;
+};
+
+const DAY_MS = 86_400_000;
+
+/** Public signals are field elements; show them the way a verifier would read them. */
+function thresholdLabel(predicate: string, threshold: number, args: Record<string, unknown>) {
+  if (predicate === "salary_below") return `AED ${threshold.toLocaleString("en-GB")}`;
+  if (predicate === "age_at_least") {
+    const cutoff = new Date(threshold * DAY_MS).toISOString().slice(0, 10);
+    return `${args.years ?? ""} years — born on or before ${cutoff}`;
+  }
+  return String(threshold);
+}
+
+function shortCommitment(commitment: string) {
+  const hex = BigInt(commitment).toString(16);
+  return `0x${hex.slice(0, 2)}…${hex.slice(-2)}`;
+}
+
+function hiddenField(predicate: string) {
+  return predicate === "salary_below" ? "the salary" : "the date of birth";
+}
+
+function ProofDetail({
+  predicate,
+  args,
+  result,
+  proof,
+  verifyMs,
+}: {
+  predicate: string;
+  args: Record<string, unknown>;
+  result: boolean;
+  proof?: unknown;
+  verifyMs: number | null;
+}) {
+  const [showRaw, setShowRaw] = useState(false);
+  const zk = proof as ClaimProofInputs | undefined;
+  const inputs = zk?.publicInputs;
+
+  return (
+    <div className="rounded-lg border border-navy-200 bg-white px-4 py-3">
+      <p className="flex items-center gap-1.5 text-sm font-semibold text-navy-900">
+        <Check size={15} />
+        {zk
+          ? `Zero-knowledge proof verified (Groth16)${verifyMs === null ? "" : ` · ${verifyMs} ms`}`
+          : "Digital signature verified"}
+      </p>
+      <p className="mt-0.5 text-xs text-navy-500">{predicateLabel(predicate, args)}</p>
+
+      {zk && inputs && (
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg bg-teal-100 px-3 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-navy-700">
+              Verifier saw
+            </p>
+            <dl className="mt-1.5 space-y-1 text-xs text-navy-800">
+              <div className="flex justify-between gap-3">
+                <dt className="text-navy-500">Threshold</dt>
+                <dd className="text-right font-medium">
+                  {thresholdLabel(predicate, inputs.threshold, args)}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-navy-500">Commitment</dt>
+                <dd className="font-mono">{shortCommitment(inputs.commitment)}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-navy-500">Result</dt>
+                <dd className="font-semibold">{result ? "YES" : "NO"}</dd>
+              </div>
+            </dl>
+          </div>
+          <div className="rounded-lg border border-navy-200 px-3 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-navy-700">
+              Verifier never saw
+            </p>
+            <p className="mt-1.5 flex items-center gap-1.5 text-xs text-navy-800">
+              <Lock size={13} />
+              {hiddenField(predicate)}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {zk && (
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={() => setShowRaw((open) => !open)}
+            className="text-xs font-semibold text-navy-700"
+          >
+            {showRaw ? "▾" : "▸"} View raw proof
+          </button>
+          {showRaw && (
+            <pre className="mt-2 max-h-56 overflow-auto rounded-lg border border-navy-100 bg-navy-50 p-3 font-mono text-[11px] leading-relaxed text-navy-800">
+              {JSON.stringify({ ...zk.proof, publicSignals: zk.publicSignals }, null, 2)}
+            </pre>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 type PanelAnswer = {
   results: QueryResponse["results"];
   receipt: Record<string, unknown>;
@@ -79,10 +188,11 @@ function ResultChip({
         </span>
       </span>
       <span
-        className={`rounded-full px-3 py-0.5 text-xs font-semibold uppercase tracking-wide text-white ${
+        className={`flex items-center gap-1 rounded-full px-3 py-0.5 text-xs font-semibold uppercase tracking-wide text-white ${
           result ? "bg-emerald-600" : "bg-red-600"
         }`}
       >
+        {result && <Check size={12} />}
         {result ? "Yes" : "No"}
       </span>
     </div>
@@ -120,7 +230,11 @@ export default function GatewayPanel({
   const [showReceipt, setShowReceipt] = useState(false);
   const [pending, setPending] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [proof, setProof] = useState<{ valid: boolean; reason: string } | null>(null);
+  const [proof, setProof] = useState<{
+    valid: boolean;
+    reason: string;
+    verifyMs: number | null;
+  } | null>(null);
 
   const agent = agents.find((a) => a.id === agentId)!;
 
@@ -167,9 +281,13 @@ export default function GatewayPanel({
         body: JSON.stringify({ receipt: answer.receipt }),
       });
       const data = await response.json();
-      setProof({ valid: Boolean(data.valid), reason: String(data.reason ?? "") });
+      setProof({
+        valid: Boolean(data.valid),
+        reason: String(data.reason ?? ""),
+        verifyMs: typeof data.verifyMs === "number" ? data.verifyMs : null,
+      });
     } catch (error) {
-      setProof({ valid: false, reason: String(error) });
+      setProof({ valid: false, reason: String(error), verifyMs: null });
     } finally {
       setVerifying(false);
     }
@@ -276,7 +394,7 @@ export default function GatewayPanel({
             type="button"
             onClick={() => ask()}
             disabled={pending}
-            className="rounded-lg bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 disabled:opacity-50"
+            className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
           >
             {pending ? "Asking…" : "Ask Custos"}
           </button>
@@ -322,12 +440,19 @@ export default function GatewayPanel({
                   {verifying ? "Verifying…" : "Verify proof"}
                 </button>
               </div>
-              {proof && (
-                <p
-                  className={`mt-2 text-xs ${proof.valid ? "text-emerald-800" : "text-red-800"}`}
-                >
-                  {proof.reason}
-                </p>
+              {proof && !proof.valid && (
+                <p className="mt-2 text-xs text-red-800">{proof.reason}</p>
+              )}
+              {proof?.valid && (
+                <div className="mt-3 space-y-2">
+                  {answer.results.map((claim, i) => (
+                    <ProofDetail
+                      key={`detail-${claim.predicate}-${i}`}
+                      {...claim}
+                      verifyMs={proof.verifyMs}
+                    />
+                  ))}
+                </div>
               )}
               <p className="mt-2 text-[11px] text-navy-400">
                 {answer.results.some((claim) => claim.proof)

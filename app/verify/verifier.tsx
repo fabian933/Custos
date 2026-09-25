@@ -75,7 +75,7 @@ export default function Verifier() {
           type="button"
           onClick={() => verify(text)}
           disabled={pending}
-          className="rounded-lg bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 disabled:opacity-50"
+          className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
         >
           {pending ? "Verifying…" : "Verify"}
         </button>

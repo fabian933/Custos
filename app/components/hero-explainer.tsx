@@ -144,7 +144,7 @@ export default function HeroExplainer() {
 
         <div
           key={withCustos ? "with" : "without"}
-          className="animate-chip-in rounded-xl border border-navy-100 bg-navy-50/60 p-5"
+          className="animate-chip-in rounded-xl border border-navy-100 bg-teal-100/70 p-5"
         >
           <div className="flex items-start gap-4">
             <div className="flex shrink-0 flex-col items-center gap-2">

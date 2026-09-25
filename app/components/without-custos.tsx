@@ -49,33 +49,14 @@ export default function WithoutCustos({ emiratesId }: { emiratesId: string }) {
   }, [emiratesId]);
 
   return (
-    <section className="panel">
-      <header className="panel-head">
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-red-500" />
-          <h2 className="panel-title">Without Custos</h2>
-        </div>
-        <p className="mt-2 text-sm text-navy-500">
-          The agent calls the ministry directly and gets the whole record back.
-        </p>
-      </header>
-
-      <div className="flex flex-1 flex-col gap-3 p-6">
-        <p className="font-mono text-[11px] text-navy-500">
-          GET /api/legacy-record?emiratesId={emiratesId}
-        </p>
-        <p className="text-xs font-medium text-navy-600">
-          What lands in the model&apos;s context and in the logs:
-        </p>
-        {error ? (
-          <p className="text-sm text-red-600">{error}</p>
-        ) : (
-          <RecordJson json={json} />
-        )}
-        <p className="mt-auto rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          Everything the agent asked for, and everything it didn&apos;t.
-        </p>
-      </div>
-    </section>
+    <div className="flex flex-col gap-3">
+      <p className="font-mono text-[11px] text-navy-500">
+        GET /api/legacy-record?emiratesId={emiratesId}
+      </p>
+      {error ? <p className="text-sm text-red-600">{error}</p> : <RecordJson json={json} />}
+      <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        Everything the agent asked for, and everything it didn&apos;t.
+      </p>
+    </div>
   );
 }

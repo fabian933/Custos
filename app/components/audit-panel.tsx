@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { predicateLabel } from "@/lib/labels";
 import type { AuditEntry } from "@/lib/audit";
 
 function time(timestamp: string): string {
@@ -71,8 +72,8 @@ export default function AuditPanel({ refreshToken }: { refreshToken: number }) {
               </p>
               <p className="mt-0.5 text-sm text-navy-800">{entry.question}</p>
               {answered ? (
-                <p className="mt-1 font-mono text-[11px] text-navy-500">
-                  {entry.predicates.map((p) => p.predicate).join(", ")}
+                <p className="mt-1 text-[11px] text-navy-500">
+                  {entry.predicates.map((p) => predicateLabel(p.predicate, p.args)).join(" · ")}
                 </p>
               ) : (
                 <p className="mt-1 text-xs text-red-700">{entry.reason}</p>

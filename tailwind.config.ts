@@ -21,6 +21,33 @@ const config: Config = {
           800: "#152740",
           900: "#0e1b2e",
         },
+        teal: {
+          50: "#eefbf8",
+          100: "#d3f4ed",
+          200: "#a7e9db",
+          300: "#6ed6c4",
+          400: "#35bba7",
+          500: "#189e8c",
+          600: "#0f7e72",
+          700: "#11655d",
+          800: "#12514b",
+          900: "#12443f",
+        },
+      },
+      keyframes: {
+        "flow-out": {
+          "0%": { transform: "translateX(-14px)", opacity: "0" },
+          "40%, 60%": { opacity: "1" },
+          "100%": { transform: "translateX(14px)", opacity: "0" },
+        },
+        "chip-in": {
+          from: { transform: "translateY(4px)", opacity: "0" },
+          to: { transform: "translateY(0)", opacity: "1" },
+        },
+      },
+      animation: {
+        "flow-out": "flow-out 1.8s ease-in-out infinite",
+        "chip-in": "chip-in 0.45s ease-out both",
       },
       fontFamily: {
         sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],

@@ -1,15 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import CopyButton from "./copy-button";
+import WithoutCustos from "./without-custos";
+import { predicateLabel, predicateNameLabel } from "@/lib/labels";
 import type { QueryResponse } from "@/lib/query";
 import type { Agent, PredicateName } from "@/lib/types";
 
-const EXAMPLES = [
-  "Is this person eligible for a housing grant?",
-  "Is their visa valid until 2026-12-31?",
-  "What is their exact salary?",
-  "هل عمره ٢١ سنة على الأقل؟",
+export interface Scenario {
+  label: string;
+  agentId: string;
+  residentIndex: number;
+  question: string;
+}
+
+/** Residents are addressed by position so the scenarios survive edits to the data file. */
+export const SCENARIOS: Scenario[] = [
+  {
+    label: "Housing eligibility",
+    agentId: "housing-agent",
+    residentIndex: 0,
+    question: "Is this person eligible for a housing grant?",
+  },
+  {
+    label: "Over-reach",
+    agentId: "housing-agent",
+    residentIndex: 0,
+    question: "What is their exact salary?",
+  },
+  {
+    label: "Rogue agent",
+    agentId: "rogue-agent",
+    residentIndex: 0,
+    question: "Is this person eligible for a housing grant?",
+  },
+  {
+    label: "Out of scope",
+    agentId: "bank-kyc-agent",
+    residentIndex: 0,
+    question: "Is this person eligible for a housing grant?",
+  },
+  {
+    label: "Bulk request",
+    agentId: "housing-agent",
+    residentIndex: 0,
+    question: "List every resident earning under 20000.",
+  },
+  {
+    label: "Arabic",
+    agentId: "bank-kyc-agent",
+    residentIndex: 4,
+    question: "هل عمره ٢١ سنة على الأقل؟",
+  },
 ];
 
 const MANUAL_PREDICATES: { name: PredicateName; placeholder?: string }[] = [
@@ -28,11 +70,6 @@ type PanelAnswer = {
   translatedBy?: QueryResponse["translatedBy"];
 };
 
-function argsLabel(args: Record<string, unknown>): string {
-  const values = Object.values(args);
-  return values.length === 0 ? "" : `(${values.join(", ")})`;
-}
-
 function ResultChip({
   predicate,
   args,
@@ -48,10 +85,7 @@ function ResultChip({
         result ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
       }`}
     >
-      <span className="font-mono text-xs text-navy-700">
-        {predicate}
-        {argsLabel(args)}
-      </span>
+      <span className="text-sm font-medium text-navy-800">{predicateLabel(predicate, args)}</span>
       <span
         className={`rounded-full px-3 py-0.5 text-xs font-semibold uppercase tracking-wide text-white ${
           result ? "bg-emerald-600" : "bg-red-600"
@@ -71,6 +105,9 @@ interface Props {
   emiratesId: string;
   onResidentChange: (id: string) => void;
   onAnswered: () => void;
+  onReset: () => void;
+  onRunScenario: (scenario: Scenario) => void;
+  scenario: (Scenario & { runToken: number }) | null;
 }
 
 export default function GatewayPanel({
@@ -81,26 +118,31 @@ export default function GatewayPanel({
   emiratesId,
   onResidentChange,
   onAnswered,
+  onReset,
+  onRunScenario,
+  scenario,
 }: Props) {
-  const [question, setQuestion] = useState(EXAMPLES[0]);
+  const [question, setQuestion] = useState(SCENARIOS[0].question);
   const [manual, setManual] = useState(false);
   const [predicate, setPredicate] = useState<PredicateName>("is_uae_national");
   const [manualValue, setManualValue] = useState("");
   const [answer, setAnswer] = useState<PanelAnswer | null>(null);
   const [refusal, setRefusal] = useState("");
   const [showReceipt, setShowReceipt] = useState(false);
+  const [showNaive, setShowNaive] = useState(false);
   const [pending, setPending] = useState(false);
 
   const agent = agents.find((a) => a.id === agentId)!;
   const manualSpec = MANUAL_PREDICATES.find((p) => p.name === predicate)!;
   const needsValue = manualSpec.placeholder !== undefined;
 
-  async function ask() {
+  const ask = useCallback(
+    async function ask(override?: { question: string; apiKey: string; emiratesId: string }) {
     setPending(true);
     setRefusal("");
     setAnswer(null);
     try {
-      const response = manual
+      const response = manual && !override
         ? await fetch("/api/facts", {
             method: "POST",
             headers: { "content-type": "application/json", "x-api-key": agent.apiKey },
@@ -115,15 +157,25 @@ export default function GatewayPanel({
         : await fetch("/api/query", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ apiKey: agent.apiKey, emiratesId, question }),
+            body: JSON.stringify({
+              apiKey: override?.apiKey ?? agent.apiKey,
+              emiratesId: override?.emiratesId ?? emiratesId,
+              question: override?.question ?? question,
+            }),
           });
       const data = await response.json();
 
       if (!response.ok) {
         setRefusal(data.reason ?? data.error ?? `request failed (${response.status})`);
-      } else if (manual) {
+      } else if (manual && !override) {
         setAnswer({
-          results: [{ predicate: data.predicate, args: {}, result: data.answer }],
+          results: [
+            {
+              predicate: data.predicate,
+              args: data.value === undefined ? {} : { value: data.value },
+              result: data.answer,
+            },
+          ],
           receipt: data,
         });
       } else {
@@ -135,7 +187,22 @@ export default function GatewayPanel({
       setPending(false);
       onAnswered();
     }
-  }
+    },
+    [agent, emiratesId, manual, manualValue, needsValue, onAnswered, predicate, question],
+  );
+
+  const lastScenario = useRef(0);
+  useEffect(() => {
+    if (!scenario || scenario.runToken === lastScenario.current) return;
+    lastScenario.current = scenario.runToken;
+    setManual(false);
+    setQuestion(scenario.question);
+    ask({
+      question: scenario.question,
+      apiKey: agents.find((a) => a.id === scenario.agentId)!.apiKey,
+      emiratesId: residents[scenario.residentIndex].emiratesId,
+    });
+  }, [agents, ask, residents, scenario]);
 
   return (
     <section className="panel">
@@ -150,6 +217,30 @@ export default function GatewayPanel({
       </header>
 
       <div className="flex flex-1 flex-col gap-4 p-6">
+        <div>
+          <span className="field-label">Scenarios</span>
+          <div className="flex flex-wrap items-center gap-2">
+            {SCENARIOS.map((s) => (
+              <button
+                key={s.label}
+                type="button"
+                disabled={pending}
+                onClick={() => onRunScenario(s)}
+                className="rounded-full border border-teal-300 bg-teal-50 px-3 py-1.5 text-xs font-medium text-teal-800 transition hover:border-teal-500 hover:bg-teal-100 disabled:opacity-50"
+              >
+                {s.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={onReset}
+              className="ml-auto rounded-full border border-navy-200 px-3 py-1.5 text-xs text-navy-500 transition hover:border-navy-400 hover:text-navy-800"
+            >
+              Reset demo
+            </button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <label>
             <span className="field-label">Agent</span>
@@ -183,7 +274,8 @@ export default function GatewayPanel({
 
         <p className="text-xs text-navy-500">
           <span className="font-medium text-navy-700">{agent.owner}</span> · purpose:{" "}
-          {agent.purpose} · may ask: {agent.allowedPredicates.join(", ") || "nothing"}
+          {agent.purpose} · may ask:{" "}
+          {agent.allowedPredicates.map(predicateNameLabel).join(", ") || "nothing"}
         </p>
 
         {manual ? (
@@ -197,7 +289,7 @@ export default function GatewayPanel({
               >
                 {MANUAL_PREDICATES.map((p) => (
                   <option key={p.name} value={p.name}>
-                    {p.name}
+                    {predicateNameLabel(p.name)}
                   </option>
                 ))}
               </select>
@@ -222,25 +314,13 @@ export default function GatewayPanel({
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Ask in plain language — English or Arabic"
             />
-            <div className="mt-2 flex flex-wrap gap-2">
-              {EXAMPLES.map((example) => (
-                <button
-                  key={example}
-                  type="button"
-                  onClick={() => setQuestion(example)}
-                  className="rounded-full border border-navy-200 px-3 py-1 text-xs text-navy-600 transition hover:border-navy-400 hover:text-navy-800"
-                >
-                  {example}
-                </button>
-              ))}
-            </div>
           </div>
         )}
 
         <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={ask}
+            onClick={() => ask()}
             disabled={pending}
             className="rounded-lg bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 disabled:opacity-50"
           >
@@ -298,6 +378,21 @@ export default function GatewayPanel({
             </div>
           </div>
         )}
+
+        <div className="mt-auto rounded-lg border border-red-200">
+          <button
+            type="button"
+            onClick={() => setShowNaive((open) => !open)}
+            className="w-full px-4 py-2.5 text-left text-xs font-semibold text-red-700"
+          >
+            {showNaive ? "▾" : "▸"} See what a naive agent receives
+          </button>
+          {showNaive && (
+            <div className="border-t border-red-100 p-4">
+              <WithoutCustos emiratesId={emiratesId} />
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );

@@ -5,6 +5,7 @@ import { signPayload } from "./signing";
 import { findAgentByApiKey, findResident } from "./store";
 import { translateQuestion, type Translation } from "./translate";
 import { ISSUER } from "./gateway";
+import { claimsToPredicates, recordAudit } from "./audit";
 import type { PredicateName } from "./types";
 
 export interface QueryClaim {
@@ -46,6 +47,27 @@ export async function runQuery(
   emiratesId: unknown,
   question: unknown,
   translate: (q: string) => Promise<Translation> = translateQuestion,
+): Promise<QueryOutcome> {
+  const agentId = typeof apiKey === "string" ? (findAgentByApiKey(apiKey)?.id ?? null) : null;
+  const outcome = await evaluateQuery(apiKey, emiratesId, question, translate);
+
+  recordAudit({
+    agentId,
+    subjectHash: typeof emiratesId === "string" ? subjectHash(emiratesId) : null,
+    question: typeof question === "string" ? question : "",
+    outcome: outcome.ok ? "answered" : "refused",
+    predicates: outcome.ok ? claimsToPredicates(outcome.response.results) : [],
+    reason: outcome.ok ? null : outcome.reason,
+  });
+
+  return outcome;
+}
+
+async function evaluateQuery(
+  apiKey: unknown,
+  emiratesId: unknown,
+  question: unknown,
+  translate: (q: string) => Promise<Translation>,
 ): Promise<QueryOutcome> {
   if (typeof apiKey !== "string" || apiKey.trim() === "") {
     return { ok: false, status: 401, reason: REASON_UNREGISTERED };

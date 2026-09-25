@@ -68,6 +68,41 @@ Refusals return `{"refused":true,"reason":"..."}`:
 | question asks for a raw value, the full record, or bulk data | from the translator |
 | predicate outside the agent's `allowedPredicates` | `predicate not permitted for this agent's purpose` |
 
+### `POST /api/verify`
+
+Body `{"receipt": <receipt from /api/query>}`. Recomputes the canonical JSON of the receipt
+without `signature` and checks the Ed25519 signature against the gateway public key.
+
+```json
+{ "valid": true, "reason": "signature matches the canonical receipt" }
+```
+
+Flip a claim, drop a field, or edit the subject hash and it returns `valid: false` with the
+reason (`400`).
+
+### `GET /api/audit`
+
+Every `/api/query` call, newest first. In-memory only — it resets when the server restarts.
+
+```json
+{
+  "count": 1,
+  "entries": [
+    {
+      "timestamp": "2025-01-01T00:00:00.000Z",
+      "agentId": "housing-agent",
+      "subjectHash": "<sha256(emiratesId)>",
+      "question": "Is this person eligible for a housing grant?",
+      "outcome": "answered",
+      "predicates": [{ "predicate": "is_uae_national", "args": {} }],
+      "reason": null
+    }
+  ]
+}
+```
+
+The log stores the subject hash, never the Emirates ID, and predicates without their results.
+
 ### `POST /api/facts`
 
 Debug / manual mode: ask one predicate directly. Header `x-api-key: <agent key from data/agents.json>`.

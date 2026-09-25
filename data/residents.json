@@ -8,7 +8,17 @@
     "visaExpiry": null,
     "clearanceLevel": 2,
     "insurancePlan": "Thiqa Platinum",
-    "coveredTreatments": ["general", "dental", "maternity", "oncology", "physiotherapy"]
+    "coveredTreatments": [
+      "general",
+      "dental",
+      "maternity",
+      "oncology",
+      "physiotherapy"
+    ],
+    "salarySalt": "56572273993454801465133328621209120841",
+    "salaryCommitment": "3408208217111699498925096951369951393498012394777414149207272661367184163224",
+    "dobSalt": "268247006000970188707192941669117473147",
+    "dobCommitment": "11395937817563782564754467128713444043372433029981942156237288367530050305446"
   },
   {
     "emiratesId": "784-1996-7654321-2",
@@ -19,7 +29,14 @@
     "visaExpiry": null,
     "clearanceLevel": 0,
     "insurancePlan": "Thiqa Basic",
-    "coveredTreatments": ["general", "maternity"]
+    "coveredTreatments": [
+      "general",
+      "maternity"
+    ],
+    "salarySalt": "112734466427260059441677969491648206142",
+    "salaryCommitment": "18514649971546621605303520692720798369025009320916223318146976315245532885596",
+    "dobSalt": "315086094246224156605778892898029184287",
+    "dobCommitment": "10205284631584098626283372598436508470785358199629096699711114390009618509160"
   },
   {
     "emiratesId": "784-1979-2468101-3",
@@ -30,7 +47,16 @@
     "visaExpiry": "2027-08-15",
     "clearanceLevel": 3,
     "insurancePlan": "Daman Enhanced",
-    "coveredTreatments": ["general", "dental", "optical", "oncology"]
+    "coveredTreatments": [
+      "general",
+      "dental",
+      "optical",
+      "oncology"
+    ],
+    "salarySalt": "189139330817131800704773823978804958069",
+    "salaryCommitment": "16175015510377871923298821816214082261524225520426998838026123028664929639644",
+    "dobSalt": "214094748327830931722731265422413413803",
+    "dobCommitment": "11773914930682372760812458769763255153042912556610653803282904230778315592235"
   },
   {
     "emiratesId": "784-2001-1357913-4",
@@ -41,7 +67,13 @@
     "visaExpiry": "2026-02-28",
     "clearanceLevel": 1,
     "insurancePlan": "Daman Essential",
-    "coveredTreatments": ["general"]
+    "coveredTreatments": [
+      "general"
+    ],
+    "salarySalt": "214767785243465448228438052938783402154",
+    "salaryCommitment": "1332142958863459954803556529894267239975471680613282669209235720104509999556",
+    "dobSalt": "268723968194745590242702484077219845851",
+    "dobCommitment": "18468881833353886844265417090401277341153035922389325152068990157685206180419"
   },
   {
     "emiratesId": "784-1965-9876543-5",
@@ -52,6 +84,14 @@
     "visaExpiry": "2025-12-01",
     "clearanceLevel": 0,
     "insurancePlan": "Daman Basic",
-    "coveredTreatments": ["general", "physiotherapy", "cardiology"]
+    "coveredTreatments": [
+      "general",
+      "physiotherapy",
+      "cardiology"
+    ],
+    "salarySalt": "129813875126373551081526253056696720672",
+    "salaryCommitment": "9824278965945649706407385693924831972048847810772988367215563194078429934536",
+    "dobSalt": "152967730010536637615764317207067075964",
+    "dobCommitment": "14968840831822804181044580572485314277578542093730234643907729170887831140882"
   }
 ]

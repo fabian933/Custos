@@ -71,7 +71,8 @@ Refusals return `{"refused":true,"reason":"..."}`:
 ### `POST /api/verify`
 
 Body `{"receipt": <receipt from /api/query>}`. Recomputes the canonical JSON of the receipt
-without `signature` and checks the Ed25519 signature against the gateway public key.
+without `signature`, checks the Ed25519 signature against the gateway public key, and verifies
+every Groth16 proof carried by a claim.
 
 ```json
 { "valid": true, "reason": "signature matches the canonical receipt" }
@@ -154,3 +155,33 @@ The agent directory (API keys omitted).
 | `visa_valid_until` | `date` | visa expiry ≥ date (nationals always valid) |
 | `clearance_at_least` | `level` | `clearanceLevel >= level` |
 | `insured_for` | `treatment` | treatment is covered |
+
+## Zero-knowledge proofs
+
+`salary_below` and `age_at_least` are answered with a real Groth16 proof instead of trusting the
+gateway's signature alone. The circuit (`circuits/range.circom`, circomlib Poseidon +
+`LessThan`) takes the value and its salt as private inputs and the commitment, threshold and a
+mode flag as public inputs, proving:
+
+- `Poseidon(value, salt) == commitment`
+- `value < threshold` (mode `0`) or `value >= threshold` (mode `1`, used when the answer is no)
+
+Age is compared as days since the epoch for the date of birth, against the cutoff date for the
+requested age, so the date itself never appears in the proof.
+
+Each resident carries a public `salaryCommitment` / `dobCommitment`; the values and salts stay
+server-side. Answered claims gain:
+
+```json
+{ "proofType": "zk-groth16", "circuit": "range", "proof": {}, "publicSignals": [], "publicInputs": {} }
+```
+
+Artifacts (`zk/range.wasm`, `zk/range.zkey`, `zk/verification_key.json`) are committed and traced
+into the serverless bundle via `next.config.mjs`. Proof generation measures ~60–300 ms locally.
+
+Regenerating them needs the `circom` compiler on `PATH`:
+
+```bash
+npm run zk:setup         # compile + local powers of tau + Groth16 setup (demo trusted setup)
+npm run zk:commitments   # re-randomise salts and Poseidon commitments in data/residents.json
+```

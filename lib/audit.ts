@@ -8,6 +8,7 @@ export interface AuditEntry {
   outcome: "answered" | "refused";
   predicates: { predicate: string; args: Record<string, unknown> }[];
   reason: string | null;
+  zkProof?: boolean;
 }
 
 const MAX_ENTRIES = 500;
@@ -36,4 +37,8 @@ export function clearAudit(): void {
 
 export function claimsToPredicates(claims: QueryClaim[]): AuditEntry["predicates"] {
   return claims.map(({ predicate, args }) => ({ predicate, args }));
+}
+
+export function claimsHaveZkProof(claims: QueryClaim[]): boolean {
+  return claims.some((claim) => Boolean(claim.proof));
 }

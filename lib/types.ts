@@ -8,6 +8,11 @@ export interface Resident {
   clearanceLevel: number;
   insurancePlan: string;
   coveredTreatments: string[];
+  /** Public Poseidon commitments; the salts and values behind them stay server-side. */
+  salarySalt: string;
+  salaryCommitment: string;
+  dobSalt: string;
+  dobCommitment: string;
 }
 
 export interface Agent {

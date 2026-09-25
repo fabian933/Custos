@@ -14,5 +14,7 @@ export async function GET(request: Request) {
   if (!resident) {
     return NextResponse.json({ error: "no record for that Emirates ID" }, { status: 404 });
   }
-  return NextResponse.json(resident);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { salarySalt, dobSalt, ...record } = resident;
+  return NextResponse.json(record);
 }

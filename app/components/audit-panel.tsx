@@ -98,7 +98,7 @@ export default function AuditPanel({ refreshToken }: { refreshToken: number }) {
               {answered && (
                 <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-full bg-navy-50 px-2 py-0.5 text-[10px] font-medium text-navy-500">
                   <Lock size={10} />
-                  proof
+                  {entry.zkProof ? "ZK proof" : "proof"}
                 </span>
               )}
               <div className="min-w-0">

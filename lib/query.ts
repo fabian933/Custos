@@ -5,13 +5,16 @@ import { signPayload } from "./signing";
 import { findAgentByApiKey, findResident } from "./store";
 import { translateQuestion, type Translation } from "./translate";
 import { ISSUER } from "./gateway";
-import { claimsToPredicates, recordAudit } from "./audit";
+import { claimsHaveZkProof, claimsToPredicates, recordAudit } from "./audit";
+import { proveClaim, rangeWitnessFor, type ClaimProof } from "./zk";
 import type { PredicateName } from "./types";
 
 export interface QueryClaim {
   predicate: PredicateName;
   args: Record<string, unknown>;
   result: boolean;
+  /** Present for salary and age checks, which are proven in zero knowledge. */
+  proof?: ClaimProof;
 }
 
 export interface Receipt {
@@ -58,6 +61,7 @@ export async function runQuery(
     outcome: outcome.ok ? "answered" : "refused",
     predicates: outcome.ok ? claimsToPredicates(outcome.response.results) : [],
     reason: outcome.ok ? null : outcome.reason,
+    zkProof: outcome.ok && claimsHaveZkProof(outcome.response.results),
   });
 
   return outcome;
@@ -105,10 +109,14 @@ async function evaluateQuery(
       return { ok: false, status: 400, reason: `predicate ${spec.name} is missing its argument` };
     }
 
+    const result = evaluatePredicate(resident, spec.name, value);
+    const witness = rangeWitnessFor(resident, spec.name, Number(value), result);
+
     claims.push({
       predicate: spec.name,
       args: spec.args.length === 0 ? {} : { [spec.args[0].name]: value },
-      result: evaluatePredicate(resident, spec.name, value),
+      result,
+      ...(witness ? { proof: await proveClaim(witness) } : {}),
     });
   }
 

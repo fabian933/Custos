@@ -41,7 +41,7 @@ describe("POST /api/query — valid question", () => {
     if (!outcome.ok) return;
 
     const { results, receipt } = outcome.response;
-    expect(results).toEqual([
+    expect(results).toMatchObject([
       { predicate: "is_uae_national", args: {}, result: true },
       { predicate: "salary_below", args: { amount: 30000 }, result: true },
     ]);
@@ -64,7 +64,7 @@ describe("POST /api/query — valid question", () => {
     const outcome = await runQuery(bank.apiKey, RAJESH, "هل عمره ٢١ سنة على الأقل؟ 21", translate);
     expect(outcome.ok).toBe(true);
     if (!outcome.ok) return;
-    expect(outcome.response.results).toEqual([
+    expect(outcome.response.results).toMatchObject([
       { predicate: "age_at_least", args: { n: 21 }, result: true },
     ]);
   });

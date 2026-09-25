@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import CopyButton from "./copy-button";
 import { predicateLabel, predicateNameLabel } from "@/lib/labels";
+import { SIGNATURE_LABEL, ZK_LABEL, proofLabel } from "@/lib/proof-label";
 import type { QueryResponse } from "@/lib/query";
 import type { Agent } from "@/lib/types";
 
@@ -58,10 +59,12 @@ function ResultChip({
   predicate,
   args,
   result,
+  proof,
 }: {
   predicate: string;
   args: Record<string, unknown>;
   result: boolean;
+  proof?: unknown;
 }) {
   return (
     <div
@@ -69,7 +72,12 @@ function ResultChip({
         result ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
       }`}
     >
-      <span className="text-sm font-medium text-navy-800">{predicateLabel(predicate, args)}</span>
+      <span className="text-sm font-medium text-navy-800">
+        {predicateLabel(predicate, args)}
+        <span className="mt-0.5 block text-[11px] font-normal text-navy-500">
+          {proofLabel(Boolean(proof))}
+        </span>
+      </span>
       <span
         className={`rounded-full px-3 py-0.5 text-xs font-semibold uppercase tracking-wide text-white ${
           result ? "bg-emerald-600" : "bg-red-600"
@@ -322,7 +330,9 @@ export default function GatewayPanel({
                 </p>
               )}
               <p className="mt-2 text-[11px] text-navy-400">
-                Proof type: digital signature (Ed25519). Production: zero-knowledge proof.
+                {answer.results.some((claim) => claim.proof)
+                  ? `${ZK_LABEL} for salary and age checks, over a Poseidon commitment. Other checks: ${SIGNATURE_LABEL.toLowerCase()} (Ed25519).`
+                  : `${SIGNATURE_LABEL} (Ed25519) over the canonical receipt.`}
               </p>
             </div>
 

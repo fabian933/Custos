@@ -40,6 +40,10 @@ const config: Config = {
           "40%, 60%": { opacity: "1" },
           "100%": { transform: "translateX(14px)", opacity: "0" },
         },
+        "pulse-chevron": {
+          "0%, 100%": { opacity: "0.25" },
+          "50%": { opacity: "1" },
+        },
         "chip-in": {
           from: { transform: "translateY(4px)", opacity: "0" },
           to: { transform: "translateY(0)", opacity: "1" },
@@ -47,6 +51,7 @@ const config: Config = {
       },
       animation: {
         "flow-out": "flow-out 1.8s ease-in-out infinite",
+        "pulse-chevron": "pulse-chevron 1.4s ease-in-out infinite",
         "chip-in": "chip-in 0.45s ease-out both",
       },
       fontFamily: {

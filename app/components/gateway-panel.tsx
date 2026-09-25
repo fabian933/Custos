@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ShieldCheck } from "lucide-react";
 import CopyButton from "./copy-button";
-import WithoutCustos from "./without-custos";
 import { predicateLabel, predicateNameLabel } from "@/lib/labels";
 import type { QueryResponse } from "@/lib/query";
 import type { Agent, PredicateName } from "@/lib/types";
@@ -129,8 +129,11 @@ export default function GatewayPanel({
   const [answer, setAnswer] = useState<PanelAnswer | null>(null);
   const [refusal, setRefusal] = useState("");
   const [showReceipt, setShowReceipt] = useState(false);
-  const [showNaive, setShowNaive] = useState(false);
   const [pending, setPending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [proof, setProof] = useState<{ valid: boolean; reason: string; tampered: boolean } | null>(
+    null,
+  );
 
   const agent = agents.find((a) => a.id === agentId)!;
   const manualSpec = MANUAL_PREDICATES.find((p) => p.name === predicate)!;
@@ -141,6 +144,7 @@ export default function GatewayPanel({
     setPending(true);
     setRefusal("");
     setAnswer(null);
+    setProof(null);
     try {
       const response = manual && !override
         ? await fetch("/api/facts", {
@@ -190,6 +194,30 @@ export default function GatewayPanel({
     },
     [agent, emiratesId, manual, manualValue, needsValue, onAnswered, predicate, question],
   );
+
+  async function checkProof(tampered: boolean) {
+    if (!answer) return;
+    setVerifying(true);
+    const receipt = JSON.parse(JSON.stringify(answer.receipt)) as {
+      claims?: { result?: boolean }[];
+    };
+    if (tampered && receipt.claims?.length) {
+      receipt.claims[0].result = !receipt.claims[0].result;
+    }
+    try {
+      const response = await fetch("/api/verify", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ receipt }),
+      });
+      const data = await response.json();
+      setProof({ valid: Boolean(data.valid), reason: String(data.reason ?? ""), tampered });
+    } catch (error) {
+      setProof({ valid: false, reason: String(error), tampered });
+    } finally {
+      setVerifying(false);
+    }
+  }
 
   const lastScenario = useRef(0);
   useEffect(() => {
@@ -352,6 +380,54 @@ export default function GatewayPanel({
               ))}
             </div>
 
+            <div className="rounded-lg border border-teal-200 bg-teal-50/60 px-4 py-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-teal-800">
+                  <ShieldCheck size={16} />
+                  {answer.results.every((claim) => claim.result) ? "✓ Eligible" : "Answered"} ·
+                  Proof attached
+                </p>
+                {proof && (
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white ${
+                      proof.valid ? "bg-emerald-600" : "bg-red-600"
+                    }`}
+                  >
+                    {proof.valid ? "Valid" : "Invalid"}
+                  </span>
+                )}
+                <div className="ml-auto flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => checkProof(false)}
+                    disabled={verifying}
+                    className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-teal-700 disabled:opacity-50"
+                  >
+                    {verifying ? "Verifying…" : "Verify proof"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => checkProof(true)}
+                    disabled={verifying}
+                    className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+                  >
+                    Tamper
+                  </button>
+                </div>
+              </div>
+              {proof && (
+                <p
+                  className={`mt-2 text-xs ${proof.valid ? "text-emerald-800" : "text-red-800"}`}
+                >
+                  {proof.tampered ? "Flipped the first result — " : ""}
+                  {proof.reason}
+                </p>
+              )}
+              <p className="mt-2 text-[11px] text-navy-400">
+                Proof type: digital signature (Ed25519). Production: zero-knowledge proof.
+              </p>
+            </div>
+
             <div className="rounded-lg border border-navy-200">
               <div className="flex items-center justify-between px-4 py-2.5">
                 <button
@@ -359,7 +435,7 @@ export default function GatewayPanel({
                   onClick={() => setShowReceipt((open) => !open)}
                   className="text-xs font-semibold text-navy-700"
                 >
-                  {showReceipt ? "▾" : "▸"} Signed answer
+                  {showReceipt ? "▾" : "▸"} Proof (raw)
                 </button>
                 <div className="flex items-center gap-2">
                   {answer.translatedBy && (
@@ -379,20 +455,6 @@ export default function GatewayPanel({
           </div>
         )}
 
-        <div className="mt-auto rounded-lg border border-red-200">
-          <button
-            type="button"
-            onClick={() => setShowNaive((open) => !open)}
-            className="w-full px-4 py-2.5 text-left text-xs font-semibold text-red-700"
-          >
-            {showNaive ? "▾" : "▸"} See what a naive agent receives
-          </button>
-          {showNaive && (
-            <div className="border-t border-red-100 p-4">
-              <WithoutCustos emiratesId={emiratesId} />
-            </div>
-          )}
-        </div>
       </div>
     </section>
   );

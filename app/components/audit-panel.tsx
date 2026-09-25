@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Lock } from "lucide-react";
 import { predicateLabel } from "@/lib/labels";
 import type { AuditEntry } from "@/lib/audit";
 
@@ -94,6 +95,12 @@ export default function AuditPanel({ refreshToken }: { refreshToken: number }) {
               >
                 {answered ? "✓ Answered" : "✕ Refused"}
               </span>
+              {answered && (
+                <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-full bg-navy-50 px-2 py-0.5 text-[10px] font-medium text-navy-500">
+                  <Lock size={10} />
+                  proof
+                </span>
+              )}
               <div className="min-w-0">
                 <p className="text-sm text-navy-800">{entry.question}</p>
                 <p className="mt-0.5 text-xs text-navy-400">{meta(entry)}</p>

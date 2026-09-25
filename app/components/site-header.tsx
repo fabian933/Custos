@@ -35,7 +35,7 @@ export default function SiteHeader({ active }: { active: "demo" | "verify" }) {
             className={
               active === "verify"
                 ? "font-semibold text-navy-800"
-                : "rounded-full border border-navy-300 px-3 py-1.5 font-medium text-navy-700 transition hover:bg-navy-50"
+                : "rounded-full border border-navy-200 px-3 py-1.5 font-medium text-navy-700 transition hover:bg-navy-50"
             }
           >
             Verify an answer

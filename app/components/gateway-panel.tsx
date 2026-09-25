@@ -359,7 +359,7 @@ export default function GatewayPanel({
                   onClick={() => setShowReceipt((open) => !open)}
                   className="text-xs font-semibold text-navy-700"
                 >
-                  {showReceipt ? "▾" : "▸"} Signed receipt
+                  {showReceipt ? "▾" : "▸"} Signed answer
                 </button>
                 <div className="flex items-center gap-2">
                   {answer.translatedBy && (

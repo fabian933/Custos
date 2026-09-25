@@ -21,7 +21,7 @@ export default function Verifier() {
     try {
       receipt = JSON.parse(receiptText);
     } catch {
-      setError("That is not valid JSON. Paste the receipt object from the demo.");
+      setError("That is not valid JSON. Paste the signed answer from the demo.");
       setPending(false);
       return;
     }
@@ -45,11 +45,11 @@ export default function Verifier() {
     try {
       receipt = JSON.parse(text);
     } catch {
-      setError("Paste a receipt first — this button edits the JSON above.");
+      setError("Paste an answer first — this button edits the JSON above.");
       return;
     }
     if (!Array.isArray(receipt.claims) || receipt.claims.length === 0) {
-      setError("That receipt has no claims to flip.");
+      setError("That answer has no claims to flip.");
       return;
     }
     receipt.claims[0].result = !receipt.claims[0].result;
@@ -61,7 +61,7 @@ export default function Verifier() {
   return (
     <div className="space-y-5">
       <label>
-        <span className="field-label">Receipt JSON</span>
+        <span className="field-label">Signed answer</span>
         <textarea
           className="field min-h-[320px] font-mono text-[12px] leading-relaxed"
           value={text}

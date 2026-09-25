@@ -28,7 +28,7 @@ function AgentIcon() {
   );
 }
 
-function MinistryIcon() {
+function GovernmentIcon() {
   return (
     <svg viewBox="0 0 48 48" className="h-8 w-8" fill="none" strokeWidth={2}>
       <path d="M6 18 24 8l18 10" className="stroke-navy-700" strokeLinejoin="round" />
@@ -99,18 +99,19 @@ export default function HeroExplainer() {
   const [withCustos, setWithCustos] = useState(false);
 
   return (
-    <section className="panel mb-6 p-8">
-      <div className="grid gap-8 lg:grid-cols-[minmax(260px,340px)_1fr] lg:gap-12">
-        <div className="flex flex-col justify-center gap-4">
+    <section className="panel mb-6 px-8 py-6">
+      <div className="grid gap-6 lg:grid-cols-[minmax(260px,340px)_1fr] lg:gap-10">
+        <div className="flex flex-col justify-center gap-3">
           <h1 className="text-2xl font-semibold leading-snug tracking-tight text-navy-900">
-            Today, AI asks one question and receives the whole file.
+            AI agents need answers, not your sensitive data.
           </h1>
           <p className="text-base text-navy-500">
-            Custos returns the answer. The record never leaves.
+            Custos sits between AI and government records. Agents get only the answer
+            they&apos;re allowed. The record never moves.
           </p>
           <div className="inline-flex w-fit rounded-full border border-navy-200 bg-navy-50 p-1">
             {[
-              { on: false, label: "Without Custos" },
+              { on: false, label: "Today" },
               { on: true, label: "With Custos" },
             ].map((option) => (
               <button
@@ -133,7 +134,7 @@ export default function HeroExplainer() {
 
         <div
           key={withCustos ? "with" : "without"}
-          className="animate-chip-in rounded-xl border border-navy-100 bg-navy-50/60 p-6"
+          className="animate-chip-in rounded-xl border border-navy-100 bg-navy-50/60 p-5"
         >
           <div className="flex items-start gap-4">
             <Node icon={<AgentIcon />} label="AI agent" sub="housing-agent" />
@@ -145,7 +146,7 @@ export default function HeroExplainer() {
                 </div>
                 <Node icon={<ShieldIcon />} label="Custos" sub="fact gateway" />
                 <div className="flex min-w-0 flex-1 flex-col gap-3 pt-4">
-                  <Flow label="one signed fact" tone="fact" />
+                  <Flow label="one signed answer" tone="fact" />
                 </div>
               </>
             ) : (
@@ -155,20 +156,43 @@ export default function HeroExplainer() {
               </div>
             )}
 
-            <Node icon={<MinistryIcon />} label="Ministry records" sub="resident registry" />
+            <Node icon={<GovernmentIcon />} label="Government records" sub="resident registry" />
           </div>
 
-          <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-navy-500">
-                {withCustos ? "Returned to the agent" : "Exposed to the model"}
-              </p>
-              {withCustos ? (
-                <div className="animate-chip-in rounded-lg border border-teal-300 bg-teal-50 px-4 py-3">
-                  <p className="text-sm font-semibold text-teal-800">Eligible: YES ✓</p>
-                  <p className="mt-0.5 text-xs text-teal-700">+ signed receipt</p>
+          <div className="mt-5">
+            {withCustos ? (
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,260px)_1fr]">
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-navy-500">
+                    Returned to the agent
+                  </p>
+                  <div className="animate-chip-in rounded-lg border border-teal-300 bg-teal-50 px-4 py-3">
+                    <p className="text-sm font-semibold text-teal-800">Eligible: YES ✓</p>
+                    <p className="mt-0.5 text-xs text-teal-700">+ signed answer</p>
+                  </div>
                 </div>
-              ) : (
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-navy-500">
+                    Stays in government systems
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {RECORD_FIELDS.map((field) => (
+                      <span
+                        key={field}
+                        className="inline-flex items-center gap-1 rounded-full border border-navy-200 bg-navy-100 px-2.5 py-1 text-[11px] font-medium text-navy-400 transition"
+                      >
+                        <LockIcon />
+                        {field}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-navy-500">
+                  Sent to the model
+                </p>
                 <div className="flex flex-wrap gap-1.5">
                   {RECORD_FIELDS.map((field, i) => (
                     <span
@@ -180,29 +204,13 @@ export default function HeroExplainer() {
                     </span>
                   ))}
                 </div>
-              )}
-            </div>
-
-            <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-navy-500">
-                {withCustos ? "Never leaves the ministry" : "Ministry record — copied out in full"}
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {RECORD_FIELDS.map((field) => (
-                  <span
-                    key={field}
-                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${
-                      withCustos
-                        ? "border-navy-200 bg-navy-100 text-navy-400"
-                        : "border-red-300 bg-red-50 text-red-700"
-                    }`}
-                  >
-                    {withCustos && <LockIcon />}
-                    {field}
-                  </span>
-                ))}
               </div>
-            </div>
+            )}
+            <p className="mt-4 text-sm text-navy-500">
+              {withCustos
+                ? "One question. One approved answer. The record stays put."
+                : "One question. The full record sent to the model."}
+            </p>
           </div>
         </div>
       </div>

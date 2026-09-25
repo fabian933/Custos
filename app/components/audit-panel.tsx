@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { predicateLabel } from "@/lib/labels";
 import type { AuditEntry } from "@/lib/audit";
 
@@ -8,14 +8,37 @@ function time(timestamp: string): string {
   return new Date(timestamp).toLocaleTimeString("en-GB", { hour12: false });
 }
 
+function shortHash(hash: string | null): string {
+  if (!hash) return "";
+  return `subject ${hash.slice(0, 4)}…${hash.slice(-4)}`;
+}
+
+function meta(entry: AuditEntry): string {
+  const detail =
+    entry.outcome === "answered"
+      ? entry.predicates.map((p) => predicateLabel(p.predicate, p.args)).join(", ")
+      : entry.reason ?? "";
+  return [entry.agentId ?? "unknown agent", detail, time(entry.timestamp)]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 export default function AuditPanel({ refreshToken }: { refreshToken: number }) {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
+  const [freshKey, setFreshKey] = useState<string | null>(null);
+  const newest = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       const response = await fetch("/api/audit", { cache: "no-store" });
       const data = await response.json();
-      setEntries(data.entries ?? []);
+      const next: AuditEntry[] = data.entries ?? [];
+      setEntries(next);
+      const key = next[0] ? `${next[0].timestamp}-${next[0].question}` : null;
+      if (key !== newest.current) {
+        newest.current = key;
+        setFreshKey(key);
+      }
     } catch {
       /* the panel simply keeps the entries it already has */
     }
@@ -26,6 +49,12 @@ export default function AuditPanel({ refreshToken }: { refreshToken: number }) {
     const timer = setInterval(load, 2000);
     return () => clearInterval(timer);
   }, [load, refreshToken]);
+
+  useEffect(() => {
+    if (!freshKey) return;
+    const timer = setTimeout(() => setFreshKey(null), 1400);
+    return () => clearTimeout(timer);
+  }, [freshKey]);
 
   return (
     <section className="panel">
@@ -42,45 +71,36 @@ export default function AuditPanel({ refreshToken }: { refreshToken: number }) {
         </p>
       </header>
 
-      <div className="flex-1 space-y-2 overflow-y-auto p-6 lg:max-h-[640px]">
+      <div className="flex-1 divide-y divide-navy-100 overflow-y-auto lg:max-h-[640px]">
         {entries.length === 0 && (
-          <p className="text-sm text-navy-400">No questions yet. Ask one to see it appear here.</p>
+          <p className="p-6 text-sm text-navy-400">
+            No questions yet. Ask one to see it appear here.
+          </p>
         )}
         {entries.map((entry) => {
+          const key = `${entry.timestamp}-${entry.question}`;
           const answered = entry.outcome === "answered";
           return (
             <article
-              key={`${entry.timestamp}-${entry.question}`}
-              className={`rounded-lg border-l-4 px-4 py-3 ${
-                answered
-                  ? "border-l-emerald-500 bg-emerald-50/60"
-                  : "border-l-red-500 bg-red-50/60"
+              key={key}
+              className={`flex items-start gap-3 px-6 py-3.5 transition-colors duration-700 ${
+                key === freshKey ? "bg-navy-50" : "bg-white"
               }`}
             >
-              <div className="flex items-center justify-between gap-2">
-                <span
-                  className={`text-[11px] font-semibold uppercase tracking-wide ${
-                    answered ? "text-emerald-700" : "text-red-700"
-                  }`}
-                >
-                  {entry.outcome}
-                </span>
-                <span className="font-mono text-[11px] text-navy-400">{time(entry.timestamp)}</span>
-              </div>
-              <p className="mt-1 text-xs font-medium text-navy-700">
-                {entry.agentId ?? "unknown agent"}
-              </p>
-              <p className="mt-0.5 text-sm text-navy-800">{entry.question}</p>
-              {answered ? (
-                <p className="mt-1 text-[11px] text-navy-500">
-                  {entry.predicates.map((p) => predicateLabel(p.predicate, p.args)).join(" · ")}
+              <span
+                className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                  answered ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+                }`}
+              >
+                {answered ? "✓ Answered" : "✕ Refused"}
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm text-navy-800">{entry.question}</p>
+                <p className="mt-0.5 text-xs text-navy-400">{meta(entry)}</p>
+                <p className="mt-0.5 font-mono text-[11px] text-navy-300">
+                  {shortHash(entry.subjectHash)}
                 </p>
-              ) : (
-                <p className="mt-1 text-xs text-red-700">{entry.reason}</p>
-              )}
-              <p className="mt-1 truncate font-mono text-[10px] text-navy-300">
-                {entry.subjectHash}
-              </p>
+              </div>
             </article>
           );
         })}

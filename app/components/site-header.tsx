@@ -19,7 +19,7 @@ export default function SiteHeader({ active }: { active: "demo" | "verify" }) {
             href="/verify"
             className={active === "verify" ? "font-semibold text-navy-800" : "text-navy-500"}
           >
-            Verify a receipt
+            Verify an answer
           </Link>
         </nav>
       </div>

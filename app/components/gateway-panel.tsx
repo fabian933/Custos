@@ -188,8 +188,8 @@ function ResultChip({
         </span>
       </span>
       <span
-        className={`flex items-center gap-1 rounded-full px-3 py-0.5 text-xs font-semibold uppercase tracking-wide text-white ${
-          result ? "bg-emerald-600" : "bg-red-600"
+        className={`flex items-center gap-1 rounded-full px-3 py-0.5 text-xs font-semibold uppercase tracking-wide text-navy-900 ${
+          result ? "bg-emerald-400" : "bg-red-400"
         }`}
       >
         {result && <Check size={12} />}
@@ -394,7 +394,7 @@ export default function GatewayPanel({
             type="button"
             onClick={() => ask()}
             disabled={pending}
-            className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+            className="rounded-lg bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 disabled:opacity-50"
           >
             {pending ? "Asking…" : "Ask Custos"}
           </button>
@@ -424,8 +424,8 @@ export default function GatewayPanel({
                 </p>
                 {proof && (
                   <span
-                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white ${
-                      proof.valid ? "bg-emerald-600" : "bg-red-600"
+                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-navy-900 ${
+                      proof.valid ? "bg-emerald-400" : "bg-red-400"
                     }`}
                   >
                     {proof.valid ? "Valid" : "Invalid"}
@@ -435,7 +435,7 @@ export default function GatewayPanel({
                   type="button"
                   onClick={() => checkProof()}
                   disabled={verifying}
-                  className="ml-auto rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-teal-700 disabled:opacity-50"
+                  className="ml-auto rounded-lg bg-navy-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-800 disabled:opacity-50"
                 >
                   {verifying ? "Verifying…" : "Verify proof"}
                 </button>

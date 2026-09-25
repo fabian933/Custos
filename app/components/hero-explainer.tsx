@@ -2,26 +2,15 @@
 
 import { useState } from "react";
 
-const RECORD_FIELDS = [
-  "Emirates ID",
-  "Full name",
-  "Date of birth",
-  "Salary",
-  "Visa status",
-  "Clearance",
-  "Insurance",
-  "Medical cover",
-];
-
 function AgentIcon() {
   return (
     <svg viewBox="0 0 48 48" className="h-8 w-8" fill="none" strokeWidth={2}>
       <rect x="10" y="16" width="28" height="22" rx="5" className="stroke-navy-700" />
       <path d="M24 8v8" className="stroke-navy-700" strokeLinecap="round" />
       <circle cx="24" cy="6" r="2.5" className="fill-navy-700" />
-      <circle cx="18.5" cy="26" r="2.5" className="fill-teal-500" />
-      <circle cx="29.5" cy="26" r="2.5" className="fill-teal-500" />
-      <path d="M19 32h10" className="stroke-navy-400" strokeLinecap="round" />
+      <circle cx="18.5" cy="26" r="2.5" className="fill-navy-700" />
+      <circle cx="29.5" cy="26" r="2.5" className="fill-navy-700" />
+      <path d="M19 32h10" className="stroke-navy-500" strokeLinecap="round" />
     </svg>
   );
 }
@@ -41,10 +30,15 @@ function ShieldIcon() {
     <svg viewBox="0 0 48 48" className="h-9 w-9" fill="none" strokeWidth={2}>
       <path
         d="M24 5 40 11v14c0 9-7 15.5-16 18-9-2.5-16-9-16-18V11L24 5Z"
-        className="fill-teal-50 stroke-teal-600"
+        className="fill-emerald-400 stroke-navy-700"
         strokeLinejoin="round"
       />
-      <path d="m17 24 5 5 9-10" className="stroke-teal-600" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="m17 24 5 5 9-10"
+        className="stroke-navy-700"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -52,8 +46,8 @@ function ShieldIcon() {
 function LockIcon() {
   return (
     <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" strokeWidth={1.6}>
-      <rect x="3.5" y="7" width="9" height="6.5" rx="1.5" className="stroke-navy-400" />
-      <path d="M5.75 7V5a2.25 2.25 0 1 1 4.5 0v2" className="stroke-navy-400" />
+      <rect x="3.5" y="7" width="9" height="6.5" rx="1.5" className="stroke-navy-600" />
+      <path d="M5.75 7V5a2.25 2.25 0 1 1 4.5 0v2" className="stroke-navy-600" />
     </svg>
   );
 }
@@ -74,33 +68,30 @@ function Node({
       </div>
       <div>
         <p className="text-xs font-semibold text-navy-800">{label}</p>
-        <p className="text-[11px] text-navy-400">{sub}</p>
+        <p className="text-[11px] text-navy-500">{sub}</p>
       </div>
     </div>
   );
 }
 
-function Flow({
-  label,
-  tone,
-  back = false,
-}: {
-  label: string;
-  tone: "question" | "leak" | "fact";
-  back?: boolean;
-}) {
-  const colour =
-    tone === "leak" ? "bg-red-400" : tone === "fact" ? "bg-teal-500" : "bg-navy-300";
+function Link({ label, lock = false }: { label: string; lock?: boolean }) {
   return (
-    <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
-      <span className="whitespace-nowrap text-[11px] font-medium text-navy-500">{label}</span>
-      <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-navy-100">
-        <span
-          className={`absolute inset-y-0 w-1/3 rounded-full ${colour} ${
-            back ? "animate-flow-back" : "animate-flow-out"
-          }`}
-        />
-      </div>
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5 pt-5">
+      <span className="flex items-center gap-1 whitespace-nowrap text-[11px] font-medium text-navy-700">
+        {lock && <LockIcon />}
+        {label}
+      </span>
+      <svg
+        viewBox="0 0 120 12"
+        preserveAspectRatio="none"
+        className="h-3 w-full stroke-navy-700"
+        fill="none"
+        strokeWidth={1}
+      >
+        <path d="M6 6h108" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+        <path d="M11 2 6 6l5 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        <path d="M109 2l5 4-5 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      </svg>
     </div>
   );
 }
@@ -131,8 +122,8 @@ export default function HeroExplainer() {
                 className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
                   withCustos === option.on
                     ? option.on
-                      ? "bg-teal-600 text-white shadow-sm"
-                      : "bg-red-600 text-white shadow-sm"
+                      ? "bg-emerald-400 text-navy-900 shadow-sm"
+                      : "bg-navy-700 text-white shadow-sm"
                     : "text-navy-500 hover:text-navy-800"
                 }`}
               >
@@ -142,70 +133,28 @@ export default function HeroExplainer() {
           </div>
         </div>
 
-        <div
-          key={withCustos ? "with" : "without"}
-          className="animate-chip-in rounded-xl border border-navy-100 bg-teal-100/70 p-5"
-        >
+        <div className="rounded-xl border border-navy-100 bg-teal-100 p-5">
           <div className="flex items-start gap-4">
-            <div className="flex shrink-0 flex-col items-center gap-2">
-              <Node icon={<AgentIcon />} label="AI agent" sub="housing-agent" />
-              {withCustos && (
-                <span className="animate-chip-in whitespace-nowrap rounded-full border border-teal-400 bg-teal-100 px-2.5 py-1 text-[11px] font-semibold text-teal-800">
-                  Eligible ✓ · ZK proof
-                </span>
-              )}
-            </div>
+            <Node icon={<AgentIcon />} label="AI agent" sub="housing-agent" />
 
             {withCustos ? (
               <>
-                <div className="flex min-w-0 flex-1 flex-col gap-3 pt-4">
-                  <Flow label="Question" tone="question" />
-                  <Flow label="Answer + proof" tone="fact" back />
-                </div>
+                <Link label="Answer + proof" />
                 <Node icon={<ShieldIcon />} label="Custos" sub="fact gateway" />
-                <div className="flex min-w-0 flex-1 flex-col gap-3 pt-4">
-                  <Flow label="Question" tone="question" />
-                  <Flow label="Answer + proof" tone="fact" back />
-                </div>
+                <Link label="Record stays here" lock />
               </>
             ) : (
-              <div className="flex min-w-0 flex-1 flex-col gap-3 pt-4">
-                <Flow label="Question" tone="question" />
-                <Flow label="Full record" tone="leak" back />
-              </div>
+              <Link label="Full record" />
             )}
 
             <Node icon={<GovernmentIcon />} label="Government records" sub="resident registry" />
           </div>
 
-          <div className="mt-5">
-            <div className="flex flex-wrap gap-1.5">
-              {RECORD_FIELDS.map((field, i) =>
-                withCustos ? (
-                  <span
-                    key={field}
-                    className="inline-flex items-center gap-1 rounded-full border border-navy-200 bg-navy-100 px-2.5 py-1 text-[11px] font-medium text-navy-400"
-                  >
-                    <LockIcon />
-                    {field}
-                  </span>
-                ) : (
-                  <span
-                    key={field}
-                    style={{ animationDelay: `${i * 45}ms` }}
-                    className="animate-chip-in rounded-full border border-red-300 bg-red-50 px-2.5 py-1 text-[11px] font-medium text-red-700"
-                  >
-                    {field}
-                  </span>
-                ),
-              )}
-            </div>
-            <p className="mt-4 text-sm text-navy-500">
-              {withCustos
-                ? "One question. One approved answer. The record stays put."
-                : "One question. The full record sent to the model."}
-            </p>
-          </div>
+          <p className="mt-5 text-sm text-navy-600">
+            {withCustos
+              ? "One question. One approved answer. The record stays put."
+              : "One question. The full record sent to the model."}
+          </p>
         </div>
       </div>
     </section>

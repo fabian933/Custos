@@ -75,14 +75,14 @@ export default function Verifier() {
           type="button"
           onClick={() => verify(text)}
           disabled={pending}
-          className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+          className="rounded-lg bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 disabled:opacity-50"
         >
           {pending ? "Verifying…" : "Verify"}
         </button>
         <button
           type="button"
           onClick={tamper}
-          className="rounded-lg border border-red-300 px-5 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50"
+          className="rounded-lg border border-navy-200 px-5 py-2.5 text-sm font-semibold text-navy-700 transition hover:bg-teal-100"
         >
           Tamper with it
         </button>

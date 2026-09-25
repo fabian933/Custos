@@ -86,7 +86,7 @@ export default function Home() {
             </p>
             <Link
               href="/verify"
-              className="w-fit rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+              className="w-fit rounded-lg bg-navy-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-800"
             >
               Verify an answer
             </Link>
